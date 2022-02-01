@@ -49,10 +49,12 @@
 
 </head>
 
-<body>
+<body style="background-color: #71848f;
+background-image: linear-gradient(160deg, #ffffff 0%, #99d6ff 100%);">
     <header>
+
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container-fluid">
+            <div class=" container-fluid">
                 <a class="navbar-brand" href="">Adam Purnomo</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false"
@@ -61,23 +63,54 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                     <div class="navbar-nav ms-auto">
-                        <a class="nav-link active" aria-current="page" href="#">Home</a>
-                        <a class="nav-link" href="">Curriculum
+                        <a class="nav-link ms-auto" aria-current="page" href="#">Home</a>
+                        <a class="nav-link ms-auto" href="/media/resume.pdf">Curriculum
                             Vitae</a>
-                        <a class="nav-link" href="">Research Project</a>
-                        <a class="nav-link" href="#">Side Project</a>
-                        <a class="nav-link" href="">Blog</a>
+                        <a class="nav-link ms-auto" href="">Research Project</a>
+                        <a class="nav-link ms-auto" href="#">Side Project</a>
+                        <a class="nav-link ms-auto" href="">Blog</a>
                     </div>
                 </div>
             </div>
         </nav>
+
     </header>
 
-    <section class="py-5 text-center container">
-        <div class="row py-lg-5">
-            <div class="col-lg-6 col-md-8 ms-auto">
+    <div class="container container-fluid mt-4">
+        <div class="row">
+            <div class="col-sm text-center">
+
+            </div>
+            <div class="col-sm text-center">
                 <h1 class="fw-light">About Me</h1>
-                <p class="text-muted text-left">I am a graduate student at Tohoku University working at
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm text-center">
+
+                <div class="row">
+                    <div class="col text-center"><img src="media/images/pic.png" width="60%"></div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col"></div>
+                    <div class="col text-center">
+                        <a href="mailto: adamsyammaszaki@gmail.com"><img src="media/images/gmail.png" width="70%"></a>
+                    </div>
+                    <div class=" col text-center">
+                        <a href="https://github.com/AdamPurnomo"><img src="media/images/Github.png" width="70%"></a>
+                    </div>
+                    <div class="col text-center">
+                        <a href="https://www.linkedin.com/in/adam-purnomo/"><img src="media/images/linkedin.png"
+                                width="70%"></a>
+                    </div>
+                    <div class="col"></div>
+                </div>
+
+            </div>
+            <div class="col-sm text-center">
+                <p class=""">I am a graduate student at Tohoku University working at
                     Neuro-Robotics Lab
                     under the supervision of Prof. Mitsuhiro Hayashibe. I am interested in leveraging machine learning
                     techniques for dynamical system modeling, robotics control and decision making. I am specifically
@@ -97,20 +130,23 @@
                     This website is a summary of research projects and other side projects that I have done. If you have
                     any questions about my past projects, please don't hesitate to contact me via email.
                 </p>
-                <img src="" height=300 />
             </div>
-    </section>
+        </div>
+    </div>
+
+
 
     <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-        crossorigin="anonymous"></script>
+    <script src=" https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+                    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+                    crossorigin="anonymous">
+                    </script>
 
-    <footer class="text-muted py-5">
-        <div class="container text-center">
-            <p>© Adam Purnomo {% now "Y" %}</p>
-        </div>
-    </footer>
+                <footer class="py-5">
+                    <div class="container text-center">
+                        <p>© Adam Purnomo </p>
+                    </div>
+                </footer>
 </body>
 
 </html>
