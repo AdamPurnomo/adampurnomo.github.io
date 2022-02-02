@@ -27,3 +27,34 @@
     border-radius: 5%;
     margin-top: 10pt;
 }
+
+.bar {
+    background-color: rgb(95, 88, 160);
+    opacity: 0.8;
+    height: 3px;
+    margin-top: 8px;
+}
+
+.text-justify{
+    text-align: justify;
+}
+
+.detail-img{
+    object-fit: contain;
+}
+
+.caption{
+    font-style: italic;
+    font-size:medium;
+    text-indent: 0;
+}
+
+figure{
+    margin-top: 50px;
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+main{
+    padding-top: 50px;
+}
