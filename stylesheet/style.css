@@ -41,6 +41,7 @@
 
 .detail-img{
     object-fit: contain;
+    padding-bottom: 10px;
 }
 
 .caption{
@@ -58,3 +59,20 @@ figure{
 main{
     padding-top: 50px;
 }
+
+.frame-container {
+    position: relative;
+  }
+.iframe-button {
+    position: absolute;
+    top: 70px;
+    left: 430px;
+  }
+  
+  .iframe-button{
+    background-color: #242424;
+    border-color: #357dbd00; /*set the color you want here*/
+  }
+  .iframe-button:hover{
+    background-color: rgba(146, 146, 146, 0.863);
+  }
