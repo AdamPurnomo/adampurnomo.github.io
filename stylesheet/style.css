@@ -76,3 +76,7 @@ main{
   .iframe-button:hover{
     background-color: rgba(146, 146, 146, 0.863);
   }
+
+  .keywords{
+      font-style: italic;
+  }
