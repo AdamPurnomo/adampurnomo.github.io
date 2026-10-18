@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="An illustrated, interactive guide to Cloudflare's one-million-UDP-packets-per-second experiment, Linux receive queues, CPU affinity, NUMA, Hyper-Threading, and Kubernetes." />
+  <title>From Wire to Worker · A Linux Packet Processing Field Guide</title>
+  <style>
+    :root{--bg:#090e1a;--sidebar:#0e1525;--paper:#111a2b;--card:#152135;--card2:#1b2b42;--ink:#f0f5fe;--muted:#9dacbf;--quiet:#708299;--line:#2b3c53;--blue:#72b2ff;--mint:#6ee1c2;--amber:#f5c37c;--red:#ff9d9d;--violet:#c9b1ff;--radius:17px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{background:var(--bg);color:var(--ink);font:15px/1.68 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0}
+    a{color:var(--mint);text-decoration:none}a:hover{text-decoration:underline}button,input{font:inherit}button{cursor:pointer}code,pre,kbd,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}code{color:#a7d6ff;font-size:.93em}code.inline{background:#1b2b42;padding:2px 6px;border-radius:5px}
+    h1,h2,h3,h4{line-height:1.21;letter-spacing:-.035em;margin:0}h1{font-size:clamp(2.55rem,5vw,4.75rem);letter-spacing:-.065em;max-width:850px}h2{font-size:clamp(1.6rem,2.3vw,2.25rem);margin-bottom:15px}h3{font-size:1.15rem;margin-bottom:10px;letter-spacing:-.015em}p{margin:0 0 15px}strong{color:#fff}.small{font-size:.84rem;color:var(--muted)}.tiny{font-size:.75rem;color:var(--muted)}.caps{text-transform:uppercase;letter-spacing:.13em;font-size:.71rem;font-weight:800;color:var(--mint)}.muted{color:var(--muted)}.blue{color:var(--blue)}.mint{color:var(--mint)}.amber{color:var(--amber)}.violet{color:var(--violet)}
+    .shell{display:grid;grid-template-columns:264px minmax(0,1fr);max-width:1650px;margin:auto}.sidebar{background:var(--sidebar);position:sticky;top:0;height:100vh;border-right:1px solid var(--line);padding:25px 18px;overflow-y:auto;scrollbar-width:thin}.logo{font-size:1rem;font-weight:850;letter-spacing:-.045em;display:flex;gap:11px;align-items:center;padding:2px 10px 18px}.logo-mark{width:29px;height:29px;background:linear-gradient(145deg,#7aabff,#60dfbd);display:grid;place-items:center;color:#091321;border-radius:9px;font-size:18px}.nav-heading{font-size:.68rem;text-transform:uppercase;color:var(--quiet);letter-spacing:.12em;font-weight:800;margin:22px 12px 8px}.sidebar a.navlink{display:flex;align-items:center;gap:10px;color:#9cacc0;padding:8px 11px;border-radius:9px;font-size:.86rem}.navlink .num{font:700 .67rem ui-monospace,monospace;opacity:.6;width:21px}.sidebar a.navlink:hover,.sidebar a.navlink.active{background:#203249;color:#f4f9ff;text-decoration:none}.sidebar a.navlink.active{box-shadow:inset 3px 0 var(--mint)}.sidebar-footer{padding:14px 10px;color:var(--quiet);font-size:.76rem;border-top:1px solid var(--line);margin-top:25px}
+    main{min-width:0;max-width:1200px;width:100%;margin:auto;padding:0 clamp(20px,4vw,65px) 110px}.hero{padding:65px 0 34px;position:relative}.hero:before{content:"";position:absolute;z-index:-1;top:0;right:-10%;width:420px;height:340px;background:radial-gradient(ellipse,rgba(58,115,177,.22),transparent 68%);pointer-events:none}.hero .sub{font-size:1.1rem;max-width:760px;color:var(--muted);margin:21px 0 27px}.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 21px}.tag{font-size:.72rem;font-weight:750;padding:5px 10px;border-radius:50px;background:#203146;color:#b7d5ff;border:1px solid #334964}.tag.green{color:#a2f0d5;border-color:#2c5c57;background:#163636}.actions{display:flex;gap:11px;flex-wrap:wrap}.btn{background:#1d314a;color:var(--ink);border:1px solid #35516e;padding:9px 14px;border-radius:10px;font-weight:680;font-size:.86rem;display:inline-flex;gap:7px;align-items:center;justify-content:center}.btn:hover{background:#284561;text-decoration:none}.btn.primary{background:var(--mint);color:#102423;border-color:var(--mint)}.btn.primary:hover{background:#b6f9e8}.btn.mini{font-size:.75rem;padding:6px 10px}.btn.selected{background:#2c544f;border-color:#5dbb9e;color:#d8ffef}.btn:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0 16px}.metric{background:#121e30;border:1px solid var(--line);border-radius:13px;padding:15px 16px}.metric b{font-size:1.6rem;line-height:1.25;display:block;letter-spacing:-.045em}.metric span{font-size:.78rem;color:var(--muted)}.section{margin-top:64px;scroll-margin-top:25px}.section-head{margin-bottom:23px}.section-head p{color:var(--muted);max-width:760px}.eyebrow{font-size:.75rem;color:var(--mint);font-weight:800;text-transform:uppercase;letter-spacing:.11em;margin-bottom:11px;display:block}.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin:17px 0}.card.soft{background:#101a29}.card h3{margin-bottom:8px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.rule{height:1px;background:var(--line);margin:20px 0}.note{border-left:3px solid var(--blue);padding:12px 15px;background:rgba(114,178,255,.07);border-radius:0 10px 10px 0;margin:17px 0;color:#d7e7fa}.note.warning{border-left-color:var(--amber);background:rgba(245,195,124,.07)}.note.good{border-left-color:var(--mint);background:rgba(110,225,194,.08)}
+    .diagram{background:radial-gradient(circle at 50% 0%,#1a2a42,#101827 70%);border:1px solid #32445d;border-radius:15px;padding:23px;overflow:hidden}.diagram-title{font-weight:800;font-size:.92rem;margin-bottom:8px}.legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 0}.legend span{font-size:.75rem;color:var(--muted);display:inline-flex;align-items:center;gap:7px}.dot{width:9px;height:9px;border-radius:3px;display:inline-block;background:var(--blue)}.dot.green{background:var(--mint)}.dot.gold{background:var(--amber)}.dot.purple{background:var(--violet)}
+    .flow-node{min-width:0;text-align:center;background:#1b2b40;border:1px solid #3b526b;border-radius:11px;padding:14px 9px}.flow-node strong{font-size:.91rem;display:block}.flow-node small{display:block;color:var(--muted);font-size:.75rem;line-height:1.45;margin-top:3px}.flow-node.b{border-color:#456ca1;background:#192d49}.flow-node.g{border-color:#377965;background:#15382f}.flow-node.o{border-color:#906b43;background:#403023}.arrow{text-align:center;color:#9ab9d3;font-size:24px;line-height:1.3;padding:2px 0;font-weight:700}.twopath{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.branch{display:grid;gap:8px}.branch .flow-node{height:100%}.flow-subtitle{font-size:.72rem;color:var(--muted);text-align:center;margin:8px 0}
+    .pct-row{display:flex;width:100%;min-height:62px;background:#172438;border:1px solid var(--line);border-radius:10px;overflow:hidden}.pct{display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;min-width:0;padding:8px 3px;border-right:1px solid #0f1a28}.pct:last-child{border-right:0}.pct b{font-size:.84rem}.pct small{font-size:.7rem;color:#e1ebf7}.pct.eth{background:#35475c}.pct.ip{background:#1d4d79}.pct.udp{background:#286b60}.pct.data{background:#805e32}.math-equation{text-align:center;font:700 1.2rem ui-monospace,monospace;margin:15px 0;color:#e7f5ff}.math-equation em{font-style:normal;color:var(--mint)}
+    .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);margin:15px 0}table{border-collapse:collapse;width:100%;font-size:.85rem;min-width:580px}th,td{padding:12px 13px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{background:#1c2b41;color:#c9d9e9;font-weight:800}tr:last-child td{border-bottom:0}tr:nth-child(2n) td{background:#132036}.nowrap{white-space:nowrap}
+    pre{position:relative;white-space:pre;overflow-x:auto;margin:0;background:#07111e;color:#d5e4f8;padding:17px 17px 18px;border:1px solid #294058;border-radius:12px;font-size:.79rem;line-height:1.65;tab-size:2}.code-wrap{position:relative;margin:13px 0}.copy{position:absolute;top:9px;right:9px;z-index:1;border:1px solid #415673;background:#192b41;color:#d8e8fd;border-radius:7px;padding:5px 9px;font:700 .7rem system-ui}.copy:hover{background:#294563}.code-label{font-size:.71rem;font-weight:750;color:var(--muted);margin:14px 0 5px}.code-comment{color:#85a3bd}
+    .bars{display:grid;gap:13px;margin-top:20px}.barrow{display:grid;grid-template-columns:205px 1fr 78px;gap:10px;align-items:center}.bar-label{font-size:.82rem;line-height:1.3;color:#dbe7f6}.track{height:24px;background:#1b2d44;border-radius:6px;position:relative;overflow:hidden}.fill{height:100%;width:var(--width);background:linear-gradient(90deg,#4487ca,#84c1ff);border-radius:6px}.fill.green{background:linear-gradient(90deg,#2a8a78,#7be4c6)}.fill.amber{background:linear-gradient(90deg,#87603b,#f1c07d)}.bar-number{font-size:.83rem;font-weight:850;text-align:right;font-variant-numeric:tabular-nums}.exp-step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:15px 0;border-top:1px solid var(--line)}.step-circle{height:30px;width:30px;background:#23445a;color:#a8eadd;border-radius:50%;display:grid;place-items:center;font-weight:800}.exp-step h4{margin:0 0 5px;font-size:.98rem}.exp-step p{color:var(--muted);margin:0;font-size:.88rem}
+    .smtdiagram{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hardware-thread{background:#1b3050;border:1px solid #38689b;border-radius:11px;padding:12px;text-align:center;min-height:84px}.hardware-thread.green{background:#18372f;border-color:#39765e}.hardware-thread b{display:block;font-size:.88rem}.hardware-thread span{display:block;font-size:.76rem;color:var(--muted)}.shared{background:#302c43;border:1px dashed #8d7dba;border-radius:10px;text-align:center;padding:14px;font-size:.85rem}.controlrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:15px}.mode-out{min-height:105px;padding:15px;background:#1a283b;border:1px solid #334b62;border-radius:12px}.timeline{display:grid;grid-template-columns:80px repeat(6,1fr);gap:3px;align-items:center}.timeline-label{font-size:.72rem;color:var(--muted)}.tick{height:32px;border-radius:4px;background:#213148;display:grid;place-items:center;color:#bed3e7;font-size:.66rem}.tick.kernel{background:#285c94;color:#f4f9ff}.tick.app{background:#267e69;color:#f4f9ff}.tick.other{background:#66548b;color:#fff}
+    .numa-layout{display:grid;grid-template-columns:1fr 66px 1fr;gap:9px;align-items:center}.node{border:2px solid #365d8d;border-radius:13px;padding:14px;background:#14263d;text-align:center}.node.alt{border-color:#397c67;background:#132d2a}.chip{padding:18px 8px;border-radius:10px;background:#203e5c;font-weight:800;margin-bottom:9px}.node.alt .chip{background:#245042}.ram{background:#304152;padding:11px;border-radius:8px;font-size:.81rem}.cross{font-size:.75rem;color:var(--amber);text-align:center}.topology{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.corebox{background:#1a2b42;border:1px solid #3c526b;padding:10px;border-radius:11px;color:var(--ink);text-align:center}.corebox:hover{border-color:var(--mint);background:#243952}.corebox.chosen{outline:2px solid var(--mint)}.corebox .cpus{display:flex;gap:4px;margin-top:6px;justify-content:center}.cpus i{font-style:normal;font-size:.75rem;font-weight:750;padding:5px 8px;border-radius:6px;background:#27476c;color:#dbedff}.cpus i:last-child{background:#27584e;color:#b9f7e5}
+    .hashexample{display:grid;grid-template-columns:1fr 50px 1fr;gap:10px;align-items:center}.flow-select{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.flow-select button{border-radius:9px;padding:7px 12px;border:1px solid #39536f;background:#1d314b;color:#d9eafa;font-size:.82rem}.flow-select button.active{background:#345d56;border-color:#7fd3b7;color:#fff}.hash-output{padding:16px;border-radius:11px;background:#11253a;border:1px solid #395573}.hash-output strong{display:block;margin:6px 0}.hash-output .small{margin:0}
+    details{background:#142137;border:1px solid #304158;border-radius:11px;padding:13px 16px;margin:9px 0}details[open]{border-color:#466280}summary{font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}summary::-webkit-details-marker{display:none}summary:after{content:"+";font-size:1.2rem;color:var(--mint);font-weight:400}details[open] summary:after{content:"−"}details p{margin:12px 0 0;color:var(--muted)}
+    .glossary{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}.gloss{padding:12px;background:#152238;border:1px solid var(--line);border-radius:11px}.gloss dt{font-weight:850;font-size:.87rem;color:#e1f2ff}.gloss dd{margin:3px 0 0;font-size:.8rem;color:var(--muted)}#glossSearch{border:1px solid #4b6380;background:#16263c;color:#fff;padding:10px 13px;width:100%;border-radius:10px;outline:none;margin-top:9px}.foot{margin-top:67px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:.84rem}.mobile-head{display:none}.toc-progress{height:5px;background:#173147;position:fixed;top:0;left:0;width:100%;z-index:30}.toc-progress div{height:100%;width:0;background:var(--mint);transition:width .1s}.hide{display:none!important}
+    @media(max-width:1000px){.shell{grid-template-columns:1fr}.sidebar{display:none}.mobile-head{display:flex;align-items:center;gap:9px;background:#0e1728;border-bottom:1px solid var(--line);padding:12px 20px;position:sticky;top:0;z-index:20;font-weight:800}.mobile-head button{background:none;border:0;color:var(--ink);font-size:1.1rem}.sidebar.open{display:block;position:fixed;top:48px;left:0;z-index:22;height:calc(100vh - 48px);width:min(320px,85vw);box-shadow:15px 0 60px #000b}.hero{padding-top:39px}}
+    @media(max-width:700px){html,body{max-width:100%;overflow-x:clip}.grid2,.grid3{grid-template-columns:1fr}.grid4,.metrics{grid-template-columns:repeat(2,1fr)}.numa-layout{grid-template-columns:1fr;gap:8px}.cross{padding:6px}.topology{grid-template-columns:repeat(2,1fr)}.barrow{grid-template-columns:125px 1fr 60px;gap:7px}.bar-label{font-size:.7rem}.diagram{padding:15px}.card{padding:17px}.glossary{grid-template-columns:1fr}.pct b{font-size:.75rem}.pct small{font-size:.58rem}.hashexample{grid-template-columns:1fr}.hashexample .arrow{transform:rotate(90deg)}}
+    @media print{body{background:white;color:#101b29}.sidebar,.mobile-head,.actions,.toc-progress,.controlrow,.copy,#glossSearch{display:none!important}.shell{display:block}main{padding:15px;width:100%;max-width:none}.hero{padding-top:0}.section{break-inside:avoid-page;margin-top:28px}.card,.diagram,.metric,details{background:#fff!important;border:1px solid #cad4e0!important;color:#17283a!important}h1,h2,h3,h4,strong{color:#102030!important}.muted,p,.small,.tiny,.card p{color:#344658!important}details{break-inside:avoid}details p{display:block}.node,.flow-node,.corebox,.chip,.ram{print-color-adjust:exact;-webkit-print-color-adjust:exact}a{color:#165f6d}}
+    /* Light reading theme — optimized for diagrams, code and long-form learning. */
+    :root{
+      color-scheme: light;
+      --bg:#f7f9fc;
+      --sidebar:#ffffff;
+      --paper:#ffffff;
+      --card:#ffffff;
+      --card2:#eef4f9;
+      --ink:#17263b;
+      --muted:#53657a;
+      --quiet:#63758a;
+      --line:#dce5ee;
+      --blue:#2567bd;
+      --mint:#087c65;
+      --amber:#965911;
+      --red:#b73535;
+      --violet:#6948a8;
+    }
+    body{background:var(--bg);color:var(--ink)}
+    a{color:#086d63}
+    strong{color:#16273e}
+    code{color:#125a93}
+    code.inline{background:#edf3fb}
+    .caps,.eyebrow{color:var(--mint)}
+    .sidebar{background:#fff;box-shadow:1px 0 18px rgba(29,53,83,.025)}
+    .logo-mark{background:linear-gradient(135deg,#2874bc,#129d7b);color:white}
+    .sidebar a.navlink{color:#495c74}
+    .sidebar a.navlink:hover,.sidebar a.navlink.active{background:#e7f2f4;color:#0b4f50}
+    .hero:before{background:radial-gradient(ellipse,rgba(95,169,218,.15),transparent 70%)}
+    .tag{background:#ecf3fc;color:#245b98;border-color:#ccdded}
+    .tag.green{background:#e6f6f0;color:#08735b;border-color:#baddcc}
+    .btn{background:#fff;color:#26425d;border-color:#cad9e7;box-shadow:0 1px 3px rgba(28,52,81,.05)}
+    .btn:hover{background:#eef4f9}
+    .btn.primary{background:#0f806e;color:white;border-color:#0f806e}
+    .btn.primary:hover{background:#096756}
+    .btn.selected{background:#d8f4e8;border-color:#2b9c7c;color:#07563f}
+    .metric{background:#fff;border-color:#dbe5ef;box-shadow:0 2px 10px rgba(22,51,83,.03)}
+    .card{background:#fff;border-color:#d8e2ec;box-shadow:0 3px 13px rgba(37,60,84,.035)}
+    .card.soft{background:#f0f5fa}
+    .note{background:#eaf2fc;color:#244665;border-left-color:#397fc1}
+    .note.warning{background:#fff5e6;border-left-color:#d38a2d}
+    .note.good{background:#e9f7f1;border-left-color:#259575}
+    .diagram{background:linear-gradient(180deg,#f7fbff,#eff5fb);border-color:#ccdae8}
+    .flow-node{background:#fff;border-color:#c8d8e7}
+    .flow-node.b{border-color:#9cbee3;background:#e9f3ff}
+    .flow-node.g{border-color:#99d4bc;background:#e5f8f1}
+    .flow-node.o{border-color:#e1c89d;background:#fff1d9}
+    .arrow{color:#678cae}
+    .pct-row{background:#f5f7fa;border-color:#d1dce7}
+    .pct{border-right-color:#f8fafc}
+    .pct small{color:#ffffff}
+    .pct.eth{background:#57748e;color:white}
+    .pct.ip{background:#356ea5;color:white}
+    .pct.udp{background:#278d76;color:white}
+    .pct.data{background:#ac7c42;color:white}
+    .math-equation{color:#1e4161}
+    .math-equation em{color:#087c65}
+    th{background:#eaf1f7;color:#243b55}
+    tr:nth-child(2n) td{background:#f5f8fb}
+    pre{background:#f3f7fc;color:#17314d;border-color:#d2e0ed}
+    .copy{background:#fff;color:#28567d;border-color:#c9d9e7}
+    .copy:hover{background:#e5f0fa}
+    .code-comment{color:#50748e}
+    .bar-label{color:#334b64}
+    .track{background:#e3edf6}
+    .fill{background:linear-gradient(90deg,#2966ab,#6fa9dd)}
+    .fill.green{background:linear-gradient(90deg,#087c65,#5fc2a7)}
+    .fill.amber{background:linear-gradient(90deg,#b17b36,#e4b36b)}
+    .step-circle{background:#d7efe8;color:#0a6755}
+    .hardware-thread{background:#e4f0ff;border-color:#a5c6e6}
+    .hardware-thread.green{background:#e2f7ed;border-color:#a6d7c6}
+    .shared{background:#f0ecfa;border-color:#b8a3e1}
+    .mode-out{background:#f2f7fb;border-color:#d1e0ee}
+    .tick{background:#e1eaf4;color:#536780}
+    .tick.kernel{background:#337ab7;color:white}
+    .tick.app{background:#259273;color:white}
+    .tick.other{background:#8166b1;color:white}
+    .node{background:#eaf3fd;border-color:#8ab6de}
+    .node.alt{background:#e8f7f1;border-color:#8fceb8}
+    .chip{background:#cfe2f6}
+    .node.alt .chip{background:#c6e9dc}
+    .ram{background:#dce7f2}
+    .node.alt .ram{background:#d4eee3}
+    .corebox{background:#fff;border-color:#c8d8e7;color:#24394f}
+    .corebox:hover{border-color:#2a9f81;background:#ecf9f4}
+    .corebox.chosen{outline-color:#0b9779}
+    .cpus i{background:#dceafa;color:#21558e}
+    .cpus i:last-child{background:#d6f1e5;color:#0c735d}
+    .flow-select button{border-color:#c4d4e4;background:#fff;color:#25455f}
+    .flow-select button.active{background:#d6f2e5;border-color:#339e7f;color:#0b624a}
+    .hash-output{background:#edf5fb;border-color:#c8ddeb}
+    details{background:#fff;border-color:#d8e2ed}
+    details[open]{border-color:#85b5d6}
+    .gloss{background:#fff;border-color:#dbe5ed}
+    .gloss dt{color:#193d58}
+    #glossSearch{background:#fff;color:#263c55;border-color:#bbcfe0}
+    #glossSearch::placeholder{color:#78899b}
+    .toc-progress{background:#e1eaf4}
+    .toc-progress div{background:#0a8b70}
+    @media(max-width:1000px){.mobile-head{background:#fff}.sidebar.open{box-shadow:15px 0 60px rgba(31,49,72,.18)}}
+    
+  </style>
+</head>
+<body>
+  <div class="toc-progress" aria-hidden="true"><div id="progress"></div></div>
+  <div class="mobile-head"><button id="menuToggle" aria-label="Open table of contents">☰</button><span>FROM WIRE TO WORKER</span></div>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo"><span class="logo-mark">↗</span> From Wire to Worker</div>
+      <div class="caps" style="padding:0 11px">Study map</div>
+      <nav aria-label="Table of contents">
+        <a class="navlink" href="#overview"><span class="num">01</span> Big picture</a>
+        <a class="navlink" href="#packets"><span class="num">02</span> Packets &amp; MTU</a>
+        <a class="navlink" href="#syscalls"><span class="num">03</span> Sockets &amp; system calls</a>
+        <a class="navlink" href="#nic"><span class="num">04</span> NIC, DMA &amp; RX rings</a>
+        <a class="navlink" href="#hashing"><span class="num">05</span> Two routing decisions</a>
+        <a class="navlink" href="#experiment"><span class="num">06</span> Benchmark progression</a>
+        <a class="navlink" href="#hyperthreading"><span class="num">07</span> CPU &amp; Hyper-Threading</a>
+        <a class="navlink" href="#numa"><span class="num">08</span> NUMA and locality</a>
+        <a class="navlink" href="#yourcpu"><span class="num">09</span> Your 8-core machine</a>
+        <a class="navlink" href="#commands"><span class="num">10</span> Linux command cookbook</a>
+        <a class="navlink" href="#kubernetes"><span class="num">11</span> Kubernetes</a>
+        <a class="navlink" href="#faq"><span class="num">12</span> Common confusions</a>
+        <a class="navlink" href="#glossary"><span class="num">13</span> Glossary &amp; references</a>
+      </nav>
+      <div class="sidebar-footer">Based on Cloudflare's June 2015 experiment and our follow-up discussion. <br /><br />All diagrams are explanatory, not literal circuit schematics.</div>
+    </aside>
+    <main>
+      <header class="hero" id="top">
+        <div class="tagrow"><span class="tag green">ILLUSTRATED FIELD GUIDE</span><span class="tag">LINUX NETWORKING</span><span class="tag">OFFLINE HTML</span></div>
+        <h1>From <span class="blue">Wire</span> to <span class="mint">Worker</span></h1>
+        <p class="sub">How Linux receives a million UDP packets per second — and why RX queues, CPU cores, Hyper-Threading, NUMA, sockets, and Kubernetes all matter.</p>
+        <div class="actions"><a class="btn primary" href="#overview">Start reading ↓</a><button class="btn" onclick="window.print()">Print / Save PDF</button><a class="btn" target="_blank" rel="noopener noreferrer" href="https://blog.cloudflare.com/how-to-receive-a-million-packets/">Read the original ↗</a></div>
+        <div class="metrics">
+          <div class="metric"><b>32 B</b><span>UDP payload / datagram</span></div>
+          <div class="metric"><b>74 B</b><span>Ethernet frame before FCS</span></div>
+          <div class="metric"><b>11</b><span>NIC RX queues in benchmark</span></div>
+          <div class="metric"><b class="mint">1.4M</b><span>Best reported packets/sec</span></div>
+        </div>
+        <p class="small">Source: Marek Majkowski, <i>How to receive a million packets per second</i> (June 16, 2015). Hardware and throughput figures below are from that specific experiment, not modern benchmark promises.</p>
+      </header>
+
+      <section class="section" id="overview">
+        <div class="section-head"><span class="eyebrow">01 · Orientation</span><h2>The entire receive path, on one page</h2><p>There are two kinds of work: kernel networking work that moves the packet toward a socket, and application work that retrieves and handles that packet. The kernel work isn't necessarily a separate process.</p></div>
+        <div class="diagram">
+          <div class="flow-node" style="max-width:390px;margin:auto"><strong>Sender application</strong><small>sendmmsg() → separate UDP datagrams → Ethernet link</small></div>
+          <div class="arrow">↓</div>
+          <div class="flow-node b"><strong>NIC hardware → RSS hash</strong><small>Receive Side Scaling chooses one hardware RX queue per packet/flow</small></div>
+          <div class="arrow">↓</div>
+          <div class="twopath">
+            <div class="branch"><div class="flow-node b"><strong>RX queue 0</strong><small>Descriptors + packet buffers in RAM</small></div><div class="arrow">↓</div><div class="flow-node b"><strong>Kernel, CPU A</strong><small>NIC driver / NAPI / IP &amp; UDP processing</small></div></div>
+            <div class="branch"><div class="flow-node b"><strong>RX queue 1</strong><small>Descriptors + packet buffers in RAM</small></div><div class="arrow">↓</div><div class="flow-node b"><strong>Kernel, CPU B</strong><small>NIC driver / NAPI / IP &amp; UDP processing</small></div></div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="flow-node o"><strong>Linux UDP socket lookup + SO_REUSEPORT selection</strong><small>Another routing decision, independent of the hardware RSS hash</small></div>
+          <div class="arrow">↓</div>
+          <div class="twopath">
+            <div class="branch"><div class="flow-node g"><strong>Socket 0 receive buffer</strong><small>Software queue</small></div><div class="arrow">↓</div><div class="flow-node g"><strong>Worker 0</strong><small>recv() / recvmmsg(), on CPU C</small></div></div>
+            <div class="branch"><div class="flow-node g"><strong>Socket 1 receive buffer</strong><small>Software queue</small></div><div class="arrow">↓</div><div class="flow-node g"><strong>Worker 1</strong><small>recv() / recvmmsg(), on CPU D</small></div></div>
+          </div>
+          <div class="legend"><span><i class="dot"></i> NIC + kernel stages</span><span><i class="dot gold"></i> Kernel socket selection</span><span><i class="dot green"></i> Application-facing stages</span></div>
+          <p class="tiny" style="margin:12px 0 0">For simplicity, two queues and two workers are shown. Any RX queue can feed either eligible socket; the columns are not guaranteed one-to-one mappings. RPS, offloads and other paths may change which CPU runs later processing.</p>
+        </div>
+        <div class="grid3">
+          <div class="card"><h3 class="blue">Hardware bottleneck</h3><p class="small">A receive queue cannot be drained/replenished fast enough. The NIC can drop packets before the UDP socket.</p></div>
+          <div class="card"><h3 class="amber">Software bottleneck</h3><p class="small">A single socket receive buffer or its synchronization becomes the limit, even if multiple RX queues work.</p></div>
+          <div class="card"><h3 class="mint">Locality bottleneck</h3><p class="small">Threads compete for one core, share an SMT core, or move packet data across NUMA domains.</p></div>
+        </div>
+      </section>
+
+      <section class="section" id="packets">
+        <div class="section-head"><span class="eyebrow">02 · Vocabulary</span><h2>What is a packet, and how big is it?</h2><p>The article deliberately uses tiny datagrams. Packet rate stresses per-packet handling overhead much more than sending a few large chunks of data.</p></div>
+        <div class="card"><h3>The article's packet anatomy</h3>
+          <div class="pct-row" role="img" aria-label="74 bytes: 14 byte Ethernet header, 20 byte IPv4 header, 8 byte UDP header, and 32 byte payload">
+            <div class="pct eth" style="flex:14"><b>14 B</b><small>Ethernet</small></div><div class="pct ip" style="flex:20"><b>20 B</b><small>IPv4</small></div><div class="pct udp" style="flex:8"><b>8 B</b><small>UDP</small></div><div class="pct data" style="flex:32"><b>32 B</b><small>Application payload</small></div>
+          </div><div class="math-equation">14 + 20 + 8 + 32 = <em>74 bytes</em></div>
+          <p class="small">IPv4 = Internet Protocol version 4; UDP = User Datagram Protocol. This count excludes the 4-byte Ethernet FCS (Frame Check Sequence), physical preamble/start delimiter, and inter-frame gap.</p>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>MTU — Maximum Transmission Unit</h3><p>Typically <strong>1,500 bytes</strong> for an ordinary Ethernet IP packet. It includes the IP header, but not the Ethernet header. With standard IPv4 + TCP (Transmission Control Protocol) headers, 1,460 bytes remain for TCP data.</p><div class="note good"><strong>MTU is a maximum, not a target.</strong> The experiment's packets are far smaller.</div></div>
+          <div class="card"><h3>PPS versus bandwidth</h3><p><strong>PPS = packets per second.</strong> One million 74-byte frames corresponds to <strong>592 megabits/s</strong> when counting only those 74 bytes. Adding Ethernet FCS, preamble and inter-frame gap raises wire occupancy (typically 784 megabits/s for these frames).</p><div class="note"><strong>CPU pain often scales with packets,</strong> not only with total bytes.</div></div>
+        </div>
+      </section>
+
+      <section class="section" id="syscalls">
+        <div class="section-head"><span class="eyebrow">03 · User/kernel boundary</span><h2>Why <code>sendmmsg()</code> matters</h2><p>System calls have fixed overhead. The sender batches multiple UDP datagrams into one entry into the kernel, without merging them into one network packet.</p></div>
+        <div class="grid2">
+          <div class="card"><h3><code>send()</code> — one datagram per call</h3><div class="flow-node">User program</div><div class="arrow">↓ send(packet 1)</div><div class="flow-node b">Kernel</div><div class="arrow">↑ then ↓ send(packet 2)</div><div class="flow-node b">Kernel again</div><p class="small" style="margin-top:12px">1,024 UDP datagrams require 1,024 calls (assuming one <code>send()</code> per datagram).</p></div>
+          <div class="card"><h3><code>sendmmsg()</code> — many per call</h3><div class="flow-node">User program: array of 1,024 messages</div><div class="arrow">↓ one system call</div><div class="flow-node g">Kernel processes up to 1,024 sends</div><div class="arrow">↓</div><div class="flow-node b">1,024 separate UDP datagrams</div><p class="small" style="margin-top:12px">A successful call can send fewer than requested messages. <code>recvmmsg()</code> similarly batches receive operations.</p></div>
+        </div>
+        <div class="note warning"><strong>Terminology correction:</strong> A user → kernel mode transition is <em>not automatically a process context switch</em>. The same software thread can make the system call and return without the scheduler switching to another thread.</div>
+        <div class="card"><h3>Why did the article configure <code>iptables</code> first?</h3><p>The receiver's Linux firewall rules could otherwise add filtering overhead or connection-tracking overhead to a benchmark meant to study packet reception. The first command accepts UDP port 4321; the second bypasses connection tracking for the matching traffic, but does not bypass every firewall hook.</p><div class="code-wrap"><button class="copy">Copy</button><pre># Commands from the original controlled benchmark
+iptables -I INPUT 1 -p udp --dport 4321 -j ACCEPT
+iptables -t raw -I PREROUTING 1 -p udp --dport 4321 -j NOTRACK</pre></div><p class="small">The receiver also configured multiple local IP addresses to make it possible to steer different flows into separate hardware RX queues. Do not casually apply these permissive firewall rules to production machines.</p></div>
+        <div class="card"><h3>What does <code>SOCK_DGRAM</code> choose?</h3><p><code>socket(AF_INET, SOCK_DGRAM, 0)</code> usually creates a UDP socket on Linux. <code>AF_INET</code> selects the IPv4 address family; <code>SOCK_DGRAM</code> requests message-oriented datagram semantics; protocol <code>0</code> selects the default (UDP for this combination). <code>SOCK_DGRAM</code> alone is not universally UDP: Unix-domain datagram sockets also exist.</p><div class="code-label">Article-style pseudocode (not directly runnable in stock Python)</div><div class="code-wrap"><button class="copy" type="button">Copy</button><pre>fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+fd.bind(("0.0.0.0", 65400))
+fd.connect(("192.168.254.1", 4321))
+while True:
+    fd.sendmmsg(["\x00" * 32] * 1024)</pre></div><p class="tiny">The article uses illustrative Python-like pseudocode. Ordinary Python socket objects do not expose <code>sendmmsg()</code> directly.</p></div>
+      </section>
+
+      <section class="section" id="nic">
+        <div class="section-head"><span class="eyebrow">04 · Hardware receive path</span><h2>Is an RX queue hardware or software?</h2><p>Both, in a precise sense: the NIC hardware manages a receive-queue engine, while its descriptor ring and packet buffers generally live in system RAM.</p></div>
+        <div class="diagram"><div class="flow-node b" style="max-width:400px;margin:auto"><strong>Ethernet frame arrives at NIC</strong><small>NIC = Network Interface Card</small></div><div class="arrow">↓</div><div class="grid2"><div class="flow-node b"><strong>NIC hardware state</strong><small>Chooses RX queue; manages producer/consumer positions</small></div><div class="flow-node"><strong>System RAM</strong><small>Ring of descriptors pointing to packet buffers</small></div></div><div class="arrow">↔ DMA (Direct Memory Access)</div><div class="flow-node"><strong>Packet buffers in RAM</strong><small>The NIC writes packet bytes directly to memory, using posted descriptors</small></div><div class="arrow">↓</div><div class="flow-node g"><strong>Driver + NAPI polling on a CPU</strong><small>Consumes completed descriptors, passes packets up the stack, replenishes available buffers</small></div></div>
+        <div class="grid2">
+          <div class="card"><h3>Descriptor ring</h3><p>A circular collection of entries describing memory buffers. It is not simply a list of UDP packet objects stored inside the network card.</p><div style="display:flex;gap:6px;flex-wrap:wrap"> <span class="tag">D0 → buffer A</span><span class="tag">D1 → buffer B</span><span class="tag">D2 → buffer C</span><span class="tag">D3 → buffer D</span></div></div>
+          <div class="card"><h3>Packet drops before the application</h3><p>The article's Solarflare counter <code>rx_nodesc_drop_cnt</code> rose at roughly <strong>451k/s</strong> while RX queue 4 handled about <strong>355k/s</strong>. No available receive descriptor means the NIC cannot place an incoming packet into a posted buffer.</p></div>
+        </div>
+        <div class="card"><h3>Two distinct packet-drop locations</h3><div class="table-wrap"><table><thead><tr><th>Where</th><th>Indicative metric</th><th>What goes wrong</th></tr></thead><tbody><tr><td><strong>NIC / hardware queue</strong></td><td><code>rx_nodesc_drop_cnt</code> (Solarflare-specific)</td><td>The NIC lacks available posted RX descriptors/buffers; packet may never reach the kernel stack.</td></tr><tr><td><strong>Kernel / socket receive path</strong></td><td><code>netstat -su</code>, including <code>RcvbufErrors</code></td><td>Packets reached the kernel, but delivery into the application-facing socket could not keep up. Socket queue overflow is one possible cause.</td></tr></tbody></table></div><p class="small">Statistics are driver/kernel specific. UDP receive error counters and their subcounters should not simply be added as independent packet counts.</p></div>
+        <div class="note"><strong>Kernel work ≠ separate process.</strong> Hardware interrupts, NAPI (New API) polling, softirq (software-interrupt) processing and sometimes <code>ksoftirqd</code> kernel threads participate. The path is more nuanced than “a background process reads packets and sends them to the kernel.” The NIC already hands packet data to the driver/kernel through memory.</div>
+      </section>
+
+      <section class="section" id="hashing">
+        <div class="section-head"><span class="eyebrow">05 · Two distinct decisions</span><h2>RSS chooses the RX queue. <code>SO_REUSEPORT</code> chooses the socket.</h2><p>The most useful distinction in the article: distributing packets over NIC hardware queues does <em>not</em> automatically distribute them across application receive buffers.</p></div>
+        <div class="grid2">
+          <div class="card"><h3 class="blue">First: RSS — Receive Side Scaling</h3><p>NIC hardware hashes fields from the packet's network flow and chooses an RX queue. Packets in a stable flow generally use the same queue, helping avoid queue-induced reordering.</p><p class="small">Cloudflare's Solarflare configuration hashed <strong>source + destination IPv4 addresses only</strong> for UDP, not the port numbers. Sending to another destination IP let it spread traffic across queues.</p></div>
+          <div class="card"><h3 class="mint">Second: <code>SO_REUSEPORT</code></h3><p>Linux can let multiple sockets bind the same UDP port and select one eligible socket for each datagram. Each socket has a separate receive buffer. This avoids the earlier single-socket contention.</p><p class="small">In the benchmark, four workers did <em>not</em> receive even traffic automatically: two were idle owing to collisions in the reuse-port selection.</p></div>
+        </div>
+        <div class="card"><h3>Interactive routing example <span class="tag">conceptual</span></h3><p class="small">Select a flow. The queue and socket labels below illustrate two separate hash decisions, not a reproduction of Cloudflare's actual NIC hash function.</p>
+          <div class="flow-select" role="group" aria-label="Choose sample flow"><button type="button" class="active" data-flow="a">Flow A</button><button type="button" data-flow="b">Flow B (different port)</button><button type="button" data-flow="c">Flow C (different IP)</button></div>
+          <div class="hashexample"><div class="hash-output"><span class="caps">Packet fields</span><strong id="flowFields">192.168.254.30:65400 → 192.168.254.1:4321</strong><p class="small" id="flowHint">Baseline flow</p></div><div class="arrow">→</div><div class="hash-output"><span class="caps">Routing result</span><strong><span id="flowRx" class="blue">RX queue 4</span> → <span id="flowSock" class="mint">Socket A</span></strong><p class="small" id="hashExplanation">Both hashes can use different inputs and mapping tables.</p></div></div>
+          <div class="note warning"><strong>Consistent hashing?</strong> These are flow-based hash selections, but don't assume they provide consistent hashing in the distributed-system sense (minimal movement on membership changes), or that RX queue N maps to socket N.</div>
+        </div>
+        <div class="card"><h3>Why sharing one socket was slower</h3><div class="grid2"><div><div class="flow-node o">Worker A ↘<br/>One UDP socket receive buffer<br/>Worker B ↗</div><p class="small" style="margin-top:10px">Both workers contend on the same receive-buffer synchronization. Cloudflare measured roughly 480k packets/s.</p></div><div><div class="twopath"><div class="flow-node g">Worker A<br/>Socket A</div><div class="flow-node g">Worker B<br/>Socket B</div></div><p class="small" style="margin-top:10px"><code>SO_REUSEPORT</code> supplies separate sockets and buffers. Their test rose to about 1.14M packets/s.</p></div></div></div>
+      </section>
+
+      <section class="section" id="experiment">
+        <div class="section-head"><span class="eyebrow">06 · Evidence from the article</span><h2>The benchmark, step by step</h2><p>One bottleneck is removed only to reveal the next. Figures are approximate representative or best reported observations; runs had variability and conditions changed between stages.</p></div>
+        <div class="card"><h3>Reported throughput progression</h3>
+          <div class="bars" role="img" aria-label="Naive 197 to 350 thousand, pinned 370 thousand, two senders 354 thousand, two RX queues 650 thousand, shared socket 480 thousand, SO_REUSEPORT 1.14 million, aligned 1.4 million packets per second">
+            <div class="barrow"><span class="bar-label">Naive receiver (variable)</span><div class="track"><div class="fill amber" style="--width:25%"></div></div><span class="bar-number">197–350k</span></div>
+            <div class="barrow"><span class="bar-label">Pinned with taskset</span><div class="track"><div class="fill" style="--width:26.4%"></div></div><span class="bar-number">~370k</span></div>
+            <div class="barrow"><span class="bar-label">More sender threads</span><div class="track"><div class="fill amber" style="--width:25.3%"></div></div><span class="bar-number">~354k</span></div>
+            <div class="barrow"><span class="bar-label">Multiple RX queues</span><div class="track"><div class="fill" style="--width:46.4%"></div></div><span class="bar-number">~650k</span></div>
+            <div class="barrow"><span class="bar-label">Two threads, one socket</span><div class="track"><div class="fill amber" style="--width:34.3%"></div></div><span class="bar-number">~480k</span></div>
+            <div class="barrow"><span class="bar-label">Separate reuseport sockets</span><div class="track"><div class="fill green" style="--width:81.4%"></div></div><span class="bar-number">~1.14M</span></div>
+            <div class="barrow"><span class="bar-label">Further locality alignment</span><div class="track"><div class="fill green" style="--width:100%"></div></div><span class="bar-number">~1.4M</span></div>
+          </div><p class="tiny" style="margin-top:16px">Bars are proportional to 1.4M packets/s; the naive bar depicts its upper observed value. The 1.4M result came from additional tuning not fully reproduced step by step in the post.</p>
+        </div>
+        <div class="card"><div class="exp-step"><div class="step-circle">1</div><div><h4>Naive → inconsistent (197k–350k pps)</h4><p>Linux migrated the sender and receiver across CPUs. Cache locality and scheduling varied.</p></div></div><div class="exp-step"><div class="step-circle">2</div><div><h4>Pin with <code>taskset</code> → stable ~370k pps</h4><p><code>taskset -c 1</code> limits the application to logical CPU 1 on each machine. Sender and receiver are on <em>different servers</em>; they don't share that CPU.</p></div></div><div class="exp-step"><div class="step-circle">3</div><div><h4>Send more → throughput stays ~350k pps</h4><p>The bottleneck is on the receiver. RX queue 4 handled ~355k pps while the NIC recorded ~451k pps of no-descriptor drops.</p></div></div><div class="exp-step"><div class="step-circle">4</div><div><h4>Spread traffic over hardware RX queues → ~650k pps</h4><p>Because the NIC hashed UDP traffic by IP addresses, multiple destination IPs steered packets into different RX queues.</p></div></div><div class="exp-step"><div class="step-circle">5</div><div><h4>More workers on one socket → ~480k pps</h4><p>The application receive-buffer lock became the next bottleneck. More application threads alone made things worse.</p></div></div><div class="exp-step"><div class="step-circle">6</div><div><h4>Give workers separate sockets → ~1.14M pps</h4><p><code>SO_REUSEPORT</code> allows independent sockets, each with its own receive buffer, to bind UDP port 4321.</p></div></div><div class="exp-step"><div class="step-circle">7</div><div><h4>Tune placement and balance → 1.4M pps</h4><p>Cloudflare reports its highest result with aligned RX queues and workers within one NUMA node. Its receiver did virtually no meaningful work on packet contents.</p></div></div></div>
+        <div class="note warning"><strong>About the CPU-number discrepancy:</strong> The author says RX queue #4 maps to CPU #4, while the <code>htop</code> screenshot discussed in our chat appears to highlight the row labeled 6. An <code>htop</code> label may also be 1-based depending on version. Without interrupt-affinity evidence for that snapshot, don't infer the exact Linux CPU from the screenshot alone.</div>
+      </section>
+
+      <section class="section" id="hyperthreading">
+        <div class="section-head"><span class="eyebrow">07 · CPU topology</span><h2>One core can run two hardware threads. Why is that not always faster?</h2><p>Intel Hyper-Threading (HT) is a form of SMT (Simultaneous Multithreading). A core holds two separate hardware-thread architectural states, but they share much of the execution machinery.</p></div>
+        <div class="diagram"><div class="diagram-title">Inside one Hyper-Threaded physical core</div><div class="smtdiagram"><div class="hardware-thread"><b>Logical CPU 0</b><span>Register state A</span><span>Instruction pointer A</span></div><div class="hardware-thread green"><b>Logical CPU 8</b><span>Register state B</span><span>Instruction pointer B</span></div></div><div class="arrow">↓ ↓</div><div class="shared"><strong>Shared core resources</strong><br/>Schedulers · Integer ALUs (Arithmetic Logic Units) · Load/store units · Caches</div><p class="small" style="margin-top:12px">A core can issue/execute independent instructions from both hardware threads in overlapping clock cycles, using different execution resources. This is true concurrency, not just rapid time-slicing — but not double the physical hardware.</p></div>
+        <div class="card"><h3>Compare three CPU placements</h3><div class="controlrow" role="group" aria-label="Compare physical CPU placement"><button class="btn mini selected" data-cpu-mode="same">Same logical CPU</button><button class="btn mini" data-cpu-mode="sibling">HT sibling</button><button class="btn mini" data-cpu-mode="different">Different core</button></div><div class="mode-out"><div id="modeTitle" style="font-weight:850;margin-bottom:7px">Same logical CPU · up to ~430k pps, unstable</div><div id="modeText" class="small">Kernel RX work and application execution take turns on one logical CPU. Cache locality may help, but under overload kernel processing may starve the application.</div></div><div style="margin-top:14px" class="timeline"><div class="timeline-label">CPU A</div><div class="tick kernel">K</div><div class="tick app">App</div><div class="tick kernel">K</div><div class="tick app">App</div><div class="tick kernel">K</div><div class="tick app">App</div><div class="timeline-label">CPU B</div><div class="tick" id="m0">—</div><div class="tick" id="m1">—</div><div class="tick" id="m2">—</div><div class="tick" id="m3">—</div><div class="tick" id="m4">—</div><div class="tick" id="m5">—</div></div><p class="tiny" style="margin-top:9px">K = kernel RX work. Timeline is an explanatory schematic, not sampled CPU trace. The “same CPU” peak was volatile; HT-sibling placement was ~200k pps and another core in the same NUMA node was ~360k pps in this test.</p></div>
+        <div class="note"><strong>Important:</strong> “Same logical CPU” does not mean “same software thread.” Network receive processing may execute in softirq context or a kernel thread, while the application is a software thread scheduled on that CPU.</div>
+      </section>
+
+      <section class="section" id="numa">
+        <div class="section-head"><span class="eyebrow">08 · Memory topology</span><h2>NUMA = Non-Uniform Memory Access</h2><p>A NUMA node is a locality domain: CPU cores plus memory that is relatively fast for those cores to access. The memory is ordinary system RAM, not a special type of RAM.</p></div>
+        <div class="diagram"><div class="numa-layout"><div class="node"><div class="caps">NUMA NODE 0</div><div class="chip">Physical CPU / cores 0–5</div><div class="arrow">↕ fast local access</div><div class="ram">Ordinary RAM bank A</div></div><div class="cross">⇄<br/>Inter-socket link<br/>Remote access</div><div class="node alt"><div class="caps">NUMA NODE 1</div><div class="chip">Physical CPU / cores 6–11</div><div class="arrow">↕ fast local access</div><div class="ram">Ordinary RAM bank B</div></div></div><p class="small" style="margin:13px 0 0">Typical two-socket topology, not a universal rule: a socket may contain multiple NUMA nodes, and systems can expose memory-only nodes. Either CPU can generally access both memory regions through a shared address space.</p></div>
+        <div class="grid2"><div class="card"><h3>Why same node?</h3><p>NIC processing, packet buffers and the application can exchange data more efficiently when execution and memory are NUMA-local. Cross-node access can increase latency and consume interconnect bandwidth.</p></div><div class="card"><h3>What Cloudflare measured</h3><p>Receiver on another core in the RX queue's NUMA node: <strong>~360k pps</strong>. Receiver on a different NUMA node: <strong>~330k pps</strong> with higher variability. Later stress tests saw larger penalties.</p></div></div>
+        <div class="note good"><strong>Ideal for this benchmark:</strong> Place NIC RX-processing CPUs and application workers on separate physical cores within the <em>same</em> NUMA node, with local memory where practical. It's a performance choice, not a correctness requirement.</div>
+      </section>
+
+      <section class="section" id="yourcpu">
+        <div class="section-head"><span class="eyebrow">09 · Your machine</span><h2>Your <code>lscpu</code> result: 8 cores, 16 logical CPUs, 1 NUMA node</h2><p>You showed one socket (0), one NUMA node (0), and physical core IDs 0–7 repeated twice. That means eight physical cores with two hardware threads per core.</p></div>
+        <div class="metrics" style="margin-top:0"><div class="metric"><b>1</b><span>CPU socket</span></div><div class="metric"><b>8</b><span>Physical cores</span></div><div class="metric"><b>16</b><span>Logical CPUs</span></div><div class="metric"><b>1</b><span>NUMA node</span></div></div>
+        <div class="diagram"><div class="diagram-title">Click a physical core to inspect its Hyper-Threading sibling pair</div><div class="topology" id="topology"></div><div class="hash-output" style="margin-top:12px"><span class="caps">Selected physical core</span><strong id="coreInfo">Core 0: logical CPU 0 and logical CPU 8</strong><p class="small">Both logical CPUs have SOCKET=0 and NODE=0. Core numbers repeat between sockets on multi-socket machines; use (SOCKET, CORE) to identify a unique physical core.</p></div></div>
+        <div class="grid2"><div class="card"><h3 class="mint">Good pair for separate work</h3><p><strong>CPU 2</strong> (core 2) for RX processing and <strong>CPU 3</strong> (core 3) for the application. Different physical cores, same NUMA node.</p></div><div class="card"><h3 class="amber">Hyper-Threading siblings</h3><p><strong>CPU 0 and CPU 8</strong> share physical core 0. They can run concurrently but compete for the same core's execution resources.</p></div></div>
+        <p class="small">With only one NUMA node, you cannot reproduce Cloudflare's cross-NUMA comparison on this machine. You <em>can</em> compare same logical CPU, HT siblings, and separate physical cores.</p>
+      </section>
+
+      <section class="section" id="commands">
+        <div class="section-head"><span class="eyebrow">10 · Hands-on reference</span><h2>Inspect, pin and verify on Linux</h2><p>These commands demonstrate the mechanism. Replace interface names, interrupt numbers and chosen CPUs with values from your actual machine. Don't blindly apply benchmark tuning to a production host.</p></div>
+        <div class="card"><h3>A. Discover CPU, NUMA and NIC topology</h3><div class="code-label">Inspection only</div><div class="code-wrap"><button class="copy">Copy</button><pre># Logical CPU, physical core, socket and NUMA node
+lscpu -e=CPU,CORE,SOCKET,NODE
+numactl --hardware
+
+# Replace eth0 with the target interface
+cat /sys/class/net/eth0/device/numa_node
+ethtool -l eth0
+ethtool -S eth0
+ethtool -n eth0 rx-flow-hash udp4</pre></div><p class="small">A NIC's <code>numa_node</code> value of <code>-1</code> means unknown/unreported; device location may not be meaningful inside some virtualized environments.</p></div>
+        <div class="card"><h3>B. Check NIC receive-queue CPU mapping</h3><div class="code-wrap"><button class="copy">Copy</button><pre># Find the relevant NIC interrupt entries
+cat /proc/interrupts
+
+# Example: examine interrupt 123 (placeholder only)
+cat /proc/irq/123/smp_affinity_list
+cat /proc/irq/123/effective_affinity_list
+
+# Check Receive Packet Steering (RPS) CPU masks
+cat /sys/class/net/eth0/queues/rx-0/rps_cpus</pre></div><p class="small">IRQ = Interrupt Request. RPS = Receive Packet Steering: software can select a different CPU for later protocol processing. An interrupt's affinity alone does not prove where all packet processing runs.</p></div>
+        <div class="card"><h3>C. Illustrative CPU placement (admin privileges required for IRQ changes)</h3><div class="code-wrap"><button class="copy">Copy</button><pre># Example only — IRQ 123 is not an actual discovered IRQ
+# Tell Linux to target logical CPU 2 for that interrupt
+echo 2 | sudo tee /proc/irq/123/smp_affinity_list
+
+# Keep application on another PHYSICAL core, CPU 3
+taskset -c 3 ./udpreceiver1 0.0.0.0:4321
+
+# Alternatively: CPU + NUMA memory binding (where applicable)
+numactl --physcpubind=3 --membind=0 \
+  ./udpreceiver1 0.0.0.0:4321</pre></div><div class="note warning"><strong>Take care:</strong> <code>irqbalance</code> or the NIC driver may override/limit interrupt placement. <code>--membind=0</code> is a strict allocation policy and can fail if node 0 has insufficient memory. On your one-node computer, memory binding is generally unnecessary.</div></div>
+        <div class="card"><h3>D. Verify what actually happened</h3><div class="code-wrap"><button class="copy">Copy</button><pre># Application CPU affinity — substitute real process ID
+taskset -pc "$PID"
+grep Cpus_allowed_list /proc/"$PID"/status
+
+# CPU / NUMA memory placement (if numactl installed)
+numastat -p "$PID"
+
+# Runtime counters
+watch -n 1 'ethtool -S eth0 | grep -i rx'
+watch -n 1 'netstat -su'
+
+# Check logical CPU sibling relationships
+lscpu -e=CPU,CORE,SOCKET,NODE</pre></div><p class="small">Counter names and meaning vary across NIC drivers. Watch for packet drops in hardware descriptors vs drops at the socket/UDP layer.</p></div>
+      </section>
+
+      <section class="section" id="kubernetes">
+        <div class="section-head"><span class="eyebrow">11 · Orchestration</span><h2>Does Kubernetes do this automatically?</h2><p>Partially. Kubernetes can reserve CPU cores and coordinate NUMA-aware resources, but the full NIC queue → interrupt → socket path needs host and application configuration.</p></div>
+        <div class="grid3"><div class="card"><h3>CPU Manager</h3><p class="small"><code>static</code> assigns exclusive CPUs to eligible Guaranteed containers with integer CPU requests. <code>full-pcpus-only</code> can allocate whole physical cores.</p></div><div class="card"><h3>Topology Manager</h3><p class="small"><code>single-numa-node</code> coordinates topology hints from resource managers and supported device plugins.</p></div><div class="card"><h3>Memory Manager</h3><p class="small">Can participate in NUMA-aware memory allocation and reservation. Requires its own enabled policy/configuration.</p></div></div>
+        <div class="card"><h3>Illustrative kubelet policy</h3><div class="code-wrap"><button class="copy">Copy</button><pre># Relevant kubelet configuration fields, not a full config
+cpuManagerPolicy: static
+cpuManagerPolicyOptions:
+  full-pcpus-only: "true"
+topologyManagerPolicy: single-numa-node
+topologyManagerScope: pod</pre></div><p class="small">A workload with integer CPU request=limit and Guaranteed Quality of Service may be eligible for exclusive CPU placement. This is node-level kubelet setup, not a magic annotation you add to one Pod.</p><div class="code-label">Simplified Pod resource requirements</div><div class="code-wrap"><button class="copy">Copy</button><pre>resources:
+  requests: { cpu: "4", memory: "1Gi" }
+  limits:   { cpu: "4", memory: "1Gi" }</pre></div><p class="small">On your machine, 4 logical CPUs with the complete-physical-core policy could correspond to 2 physical cores. Kubernetes selects which IDs. Device plugins and/or specialized networking are needed for device locality; Kubernetes does not automatically tune each NIC's IRQ affinity, RSS steering, or your application's <code>SO_REUSEPORT</code> choices.</p></div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="section-head"><span class="eyebrow">12 · From our conversation</span><h2>Seven confusions worth remembering</h2></div>
+        <details open><summary>Is a logical CPU a physical core?</summary><p>No. A physical core can expose two logical CPUs (hardware threads) with Hyper-Threading enabled. Your core 0 contains logical CPUs 0 and 8, for example.</p></details>
+        <details><summary>Can two processes literally execute simultaneously on one core?</summary><p>Yes, with Simultaneous Multithreading, a core can have instructions from two hardware threads in flight together. It has multiple execution resources, not a single instruction slot. Shared resources limit gains.</p></details>
+        <details><summary>Is network RX handling a separate Linux process?</summary><p>Not necessarily. Kernel networking work runs in interrupt/softirq/NAPI contexts and sometimes in kernel threads. The application that calls <code>recv()</code> is a different software execution context, but there isn't always a standalone “NIC receiver process.”</p></details>
+        <details><summary>Does <code>taskset</code> pin the NIC interrupt too?</summary><p>No. <code>taskset</code> restricts where application threads may run. NIC IRQ affinity, NIC queue mapping and software Receive Packet Steering are configured separately.</p></details>
+        <details><summary>Does an RX queue contain packet objects inside the NIC?</summary><p>Usually not. The hardware uses a descriptor ring and packet buffers in system RAM. The NIC performs Direct Memory Access to put bytes into the buffers. The Linux driver consumes completed descriptors.</p></details>
+        <details><summary>Does NUMA mean special RAM inside the CPU?</summary><p>No. It's ordinarily attached system RAM (e.g., DDR modules). A NUMA node is a locality domain, not necessarily a separate chip. A remote processor can usually access the same RAM, just less efficiently.</p></details>
+        <details><summary>Must every RX queue map one-to-one to a socket?</summary><p>No. NIC RSS queue selection and Linux socket selection are separate routing decisions. You want an even workload distribution and favorable CPU/memory placement; a strict queue-to-socket bijection is not required.</p></details>
+        <div class="note good"><strong>Core principle:</strong> You need to scale <em>both</em> kernel-side packet reception and application-side socket consumption, while controlling CPU contention and memory locality. Optimizing only one layer can simply move the bottleneck.</div>
+      </section>
+
+      <section class="section" id="glossary">
+        <div class="section-head"><span class="eyebrow">13 · Reference desk</span><h2>Abbreviations, fully expanded</h2><p>Every term we covered, in one searchable place.</p><input type="search" id="glossSearch" placeholder="Search a term: NUMA, RX, IRQ, MTU, UDP…" aria-label="Search glossary" /></div>
+        <dl class="glossary" id="glossaryGrid">
+          <div class="gloss"><dt>CPU — Central Processing Unit</dt><dd>General-purpose processor; Linux “CPU ID” usually means logical CPU.</dd></div>
+          <div class="gloss"><dt>Core — physical execution core</dt><dd>Contains execution resources; can expose two or more hardware threads.</dd></div>
+          <div class="gloss"><dt>SMT — Simultaneous Multithreading</dt><dd>Concurrent instructions from distinct hardware threads sharing one core.</dd></div>
+          <div class="gloss"><dt>HT — Hyper-Threading</dt><dd>Intel implementation/branding for SMT.</dd></div>
+          <div class="gloss"><dt>NUMA — Non-Uniform Memory Access</dt><dd>Memory access costs vary with processor-to-memory locality.</dd></div>
+          <div class="gloss"><dt>RAM — Random Access Memory</dt><dd>System memory holding packet buffers and application data.</dd></div>
+          <div class="gloss"><dt>NIC — Network Interface Card</dt><dd>Device transmitting and receiving Ethernet frames.</dd></div>
+          <div class="gloss"><dt>RX / TX — Receive / Transmit</dt><dd>Network-card receive and transmit directions.</dd></div>
+          <div class="gloss"><dt>RSS — Receive Side Scaling</dt><dd>Hardware flow-based distribution across NIC RX queues.</dd></div>
+          <div class="gloss"><dt>RPS — Receive Packet Steering</dt><dd>Software selection of CPUs for later kernel protocol processing.</dd></div>
+          <div class="gloss"><dt>IRQ — Interrupt Request</dt><dd>Hardware/software signal to CPU; affinity guides servicing CPU.</dd></div>
+          <div class="gloss"><dt>DMA — Direct Memory Access</dt><dd>Device accesses main memory without CPU byte-by-byte copying.</dd></div>
+          <div class="gloss"><dt>NAPI — New API</dt><dd>Linux networking framework for interrupt mitigation and batched polling.</dd></div>
+          <div class="gloss"><dt>UDP — User Datagram Protocol</dt><dd>Connectionless transport preserving datagram boundaries.</dd></div>
+          <div class="gloss"><dt>TCP — Transmission Control Protocol</dt><dd>Reliable ordered byte-stream transport protocol.</dd></div>
+          <div class="gloss"><dt>IP / IPv4 — Internet Protocol / version 4</dt><dd>Addresses and routes packets through an internetwork.</dd></div>
+          <div class="gloss"><dt>MTU — Maximum Transmission Unit</dt><dd>Maximum network-layer packet size for a link.</dd></div>
+          <div class="gloss"><dt>MSS — Maximum Segment Size</dt><dd>Maximum TCP segment data payload (excluding TCP/IP headers).</dd></div>
+          <div class="gloss"><dt>FCS — Frame Check Sequence</dt><dd>Ethernet error-detection field, commonly 4 bytes.</dd></div>
+          <div class="gloss"><dt>pps / kpps / Mpps</dt><dd>Packets per second / thousand per second / million per second.</dd></div>
+          <div class="gloss"><dt>SO_REUSEPORT</dt><dd>Socket option letting eligible sockets share a local port, with receive-load distribution.</dd></div>
+          <div class="gloss"><dt>ALU — Arithmetic Logic Unit</dt><dd>CPU hardware for arithmetic and logic instructions.</dd></div>
+          <div class="gloss"><dt>FPU — Floating-Point Unit</dt><dd>CPU execution resource for floating-point operations.</dd></div>
+          <div class="gloss"><dt>QoS — Quality of Service</dt><dd>In Kubernetes, a classification governing resource and eviction behavior.</dd></div>
+          <div class="gloss"><dt>SR-IOV — Single Root Input/Output Virtualization</dt><dd>Hardware mechanism for exposing virtual functions of PCIe devices.</dd></div>
+        </dl>
+        <div class="card"><h3>Further reading</h3><p><a target="_blank" rel="noopener noreferrer" href="https://blog.cloudflare.com/how-to-receive-a-million-packets/">Cloudflare — How to receive a million packets per second (2015) ↗</a><br/><a target="_blank" rel="noopener noreferrer" href="https://docs.kernel.org/networking/scaling.html">Linux kernel — Scaling in the Linux Networking Stack ↗</a><br/><a target="_blank" rel="noopener noreferrer" href="https://www.man7.org/linux/man-pages/man2/sendmmsg.2.html">Linux manual — sendmmsg(2) ↗</a><br/><a target="_blank" rel="noopener noreferrer" href="https://www.man7.org/linux/man-pages/man2/recvmmsg.2.html">Linux manual — recvmmsg(2) ↗</a><br/><a target="_blank" rel="noopener noreferrer" href="https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/">Kubernetes — CPU Management Policies ↗</a><br/><a target="_blank" rel="noopener noreferrer" href="https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/">Kubernetes — Topology Manager ↗</a></p><p class="tiny">This is a teaching summary and technical commentary, not a copy of the original blog. Benchmark readings remain from 2015. Some details of modern kernels, network drivers and Kubernetes deployments vary by version and configuration.</p></div>
+      </section>
+      <footer class="foot">Built as a self-contained study companion · No external fonts, scripts, images, or network calls required · © Study notes, 2026 · <a href="#top">Back to top ↑</a></footer>
+    </main>
+  </div>
+  <script>
+    (function(){
+      const menu=document.getElementById('menuToggle'),sidebar=document.getElementById('sidebar');
+      if(menu)menu.addEventListener('click',()=>sidebar.classList.toggle('open'));
+      const navlinks=[...document.querySelectorAll('a.navlink')];
+      navlinks.forEach(a=>a.addEventListener('click',()=>sidebar.classList.remove('open')));
+      function updateScroll(){const d=document.documentElement,scrollTop=window.scrollY||d.scrollTop,max=d.scrollHeight-d.clientHeight;document.getElementById('progress').style.width=(max>0?scrollTop/max*100:0)+'%';let section=null;document.querySelectorAll('main section[id]').forEach(s=>{if(s.getBoundingClientRect().top<Math.min(180,window.innerHeight*.28))section=s.id});navlinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+section));}
+      window.addEventListener('scroll',updateScroll,{passive:true});updateScroll();
+      const flows={a:{fields:'192.168.254.30:65400 → 192.168.254.1:4321',hint:'Baseline: fixed source and destination IP addresses',rx:'RX queue 4',sock:'Socket A',exp:'The two independent selections happen at different stages.'},b:{fields:'192.168.254.30:65401 → 192.168.254.1:4321',hint:'Only source port changed',rx:'RX queue 4',sock:'Socket B',exp:'In the article’s NIC, UDP RSS ignores port numbers, so the RX queue stays the same. Socket selection may differ.'},c:{fields:'192.168.254.30:65400 → 192.168.254.2:4321',hint:'Destination IP changed',rx:'RX queue 5',sock:'Socket A',exp:'Changing the destination IP can steer to a different hardware queue. The application socket decision is still independent.'}};
+      document.querySelectorAll('[data-flow]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-flow]').forEach(x=>x.classList.toggle('active',x===b));const f=flows[b.dataset.flow];document.getElementById('flowFields').textContent=f.fields;document.getElementById('flowHint').textContent=f.hint;document.getElementById('flowRx').textContent=f.rx;document.getElementById('flowSock').textContent=f.sock;document.getElementById('hashExplanation').textContent=f.exp}));
+      const modes={same:{title:'Same logical CPU · up to ~430k pps, unstable',text:'The kernel and receiver application take turns on exactly one logical CPU. Excellent locality may boost peak throughput, but receive overload can leave little time for the application.',row:['—','—','—','—','—','—']},sibling:{title:'Two SMT siblings on one physical core · ~200k pps',text:'Kernel RX work runs on one hardware thread while the application runs on its Hyper-Threading sibling. They can execute concurrently, but contend for shared core resources.',row:['App','App','App','App','App','App']},different:{title:'Two distinct physical cores in one NUMA node · ~360k pps',text:'Kernel processing runs on one physical core, and the application runs on another. They share the NUMA locality domain without competing for the exact same core execution resources.',row:['App','App','App','App','App','App']}};
+      const cpuALabels=['K','App','K','App','K','App'];const cpuA=[...document.querySelectorAll('.timeline .tick')].slice(0,6);
+      document.querySelectorAll('[data-cpu-mode]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-cpu-mode]').forEach(x=>x.classList.toggle('selected',x===b));const md=modes[b.dataset.cpuMode];document.getElementById('modeTitle').textContent=md.title;document.getElementById('modeText').textContent=md.text;cpuA.forEach((el,i)=>{const str=b.dataset.cpuMode==='same'?cpuALabels[i]:'K';el.textContent=str;el.className='tick '+(str==='K'?'kernel':'app')});md.row.forEach((str,i)=>{const el=document.getElementById('m'+i);el.textContent=str;el.className='tick '+(str==='App'?'app':'')})}));
+      const top=document.getElementById('topology');for(let i=0;i<8;i++){const b=document.createElement('button');b.type='button';b.className='corebox'+(i===0?' chosen':'');b.innerHTML='<b>Core '+i+'</b><div class="cpus"><i>CPU '+i+'</i><i>CPU '+(i+8)+'</i></div>';b.addEventListener('click',()=>{top.querySelectorAll('.corebox').forEach(x=>x.classList.remove('chosen'));b.classList.add('chosen');document.getElementById('coreInfo').textContent='Core '+i+': logical CPU '+i+' and logical CPU '+(i+8)});top.appendChild(b)}
+      document.getElementById('glossSearch').addEventListener('input',function(){const q=this.value.toLowerCase().trim();document.querySelectorAll('.gloss').forEach(el=>el.classList.toggle('hide',!el.textContent.toLowerCase().includes(q)))});
+      document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',async()=>{const txt=btn.parentElement.querySelector('pre').innerText;let ok=false;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(txt);ok=true}}catch(e){}if(!ok){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{ok=document.execCommand('copy')}catch(e){}ta.remove()}btn.textContent=ok?'Copied!':'Select text';setTimeout(()=>btn.textContent='Copy',1700)}));
+    })();
+  </script>
+</body>
+</html>

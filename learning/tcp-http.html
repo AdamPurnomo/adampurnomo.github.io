@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>From TCP Bytes to HTTP Streams — An Interactive Networking Field Guide</title>
+  <style>
+    :root{--bg:#f7f9fc;--paper:#fff;--ink:#14243a;--muted:#63748a;--line:#e1e8f0;--blue:#2369c9;--blue-soft:#eaf2ff;--teal:#087d75;--teal-soft:#e5f6f3;--amber:#b87514;--amber-soft:#fff4e0;--violet:#6f54b8;--violet-soft:#f2edfd;--red:#ba4045;--red-soft:#fff0f0;--shadow:0 10px 32px rgba(24,49,83,.055);--radius:16px}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif} a{color:var(--blue)} a:hover{text-decoration-thickness:2px} button,input,textarea{font:inherit} button{cursor:pointer} code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace} code{font-size:.9em;background:#eef3f9;padding:2px 5px;border-radius:5px} pre{margin:0;overflow:auto;padding:19px 20px;background:#13283f;color:#e6f4ff;border-radius:12px;font-size:12.5px;line-height:1.62;white-space:pre} pre code{background:none;color:inherit;padding:0;font-size:inherit} strong{font-weight:720} h1,h2,h3,h4{line-height:1.2;letter-spacing:-.027em} h2{font-size:29px;margin:0 0 12px} h3{font-size:19px;margin:27px 0 11px} h4{font-size:15px;margin:20px 0 9px} p{margin:10px 0 15px} small,.small{font-size:12px;color:var(--muted)} figure{margin:0} figcaption{margin-top:10px;font-size:12px;color:var(--muted)}
+    .layout{display:grid;grid-template-columns:244px minmax(0,940px);justify-content:center;gap:34px;padding:0 35px 80px;max-width:1480px;margin:0 auto}.sidebar{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:27px 0 30px;scrollbar-width:thin}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:800;font-size:14px;letter-spacing:-.01em}.brand-icon{width:36px;height:36px;border-radius:10px;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:19px;font-weight:800}.side-meta{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:31px 0 11px 9px;font-weight:750}.sidebar a.nav{display:flex;text-decoration:none;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:9px;color:#53657b;font-size:12.5px;line-height:1.45;margin:2px 0}.sidebar a.nav:hover,.sidebar a.nav.active{background:#e7effc;color:#1858ac}.nav-index{color:#92a3b7;font-weight:750;font-size:11px;min-width:20px}.side-footer{margin:24px 7px 0;border-top:1px solid var(--line);padding-top:15px;color:var(--muted);font-size:11px}
+    main{min-width:0}.hero{margin-top:28px;background:linear-gradient(120deg,#f5f9ff 0%,#fff 60%,#eef9f5 100%);border:1px solid #dee8f3;border-radius:22px;padding:46px 44px 40px;box-shadow:var(--shadow);overflow:hidden;position:relative}.hero:before{content:"";position:absolute;right:-90px;top:-135px;width:320px;height:320px;border-radius:50%;border:56px solid rgba(52,111,199,.055);pointer-events:none}.eyebrow{text-transform:uppercase;color:var(--blue);font-size:11px;letter-spacing:.19em;font-weight:800}.hero h1{font-size:clamp(34px,4.1vw,52px);max-width:700px;line-height:1.08;margin:15px 0 17px}.hero p{font-size:16px;color:#52667d;max-width:690px}.pills{display:flex;flex-wrap:wrap;gap:8px;margin:23px 0 18px}.pill{font-size:11px;font-weight:730;letter-spacing:.02em;color:#2b577f;background:#e5f0fc;padding:5px 11px;border:1px solid #d5e5f8;border-radius:99px}.hero-visual{margin-top:28px;display:grid;grid-template-columns:1fr 31px 1fr 31px 1fr;gap:9px;align-items:center;position:relative}.hero-node{text-align:center;border:1px solid #d9e4ed;background:rgba(255,255,255,.83);padding:15px 8px;border-radius:12px;box-shadow:0 3px 10px #2e57700a}.hero-node b{display:block;font-size:13px}.hero-node span{font-size:11px;color:var(--muted)}.hero-arrow{text-align:center;color:var(--teal);font-size:22px}
+    .section{margin-top:32px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:34px 38px 35px;box-shadow:var(--shadow);scroll-margin-top:24px}.section-kicker{font-size:11px;color:var(--blue);font-weight:830;letter-spacing:.13em;text-transform:uppercase;margin-bottom:8px}.lead{font-size:16px;color:#40576f}.callout{padding:15px 18px;border-left:3px solid var(--blue);background:#f0f5fd;border-radius:0 9px 9px 0;margin:18px 0;font-size:14px}.callout.teal{background:var(--teal-soft);border-color:var(--teal)}.callout.amber{background:var(--amber-soft);border-color:var(--amber)}.callout.red{background:var(--red-soft);border-color:var(--red)}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat{background:#f7f9fc;border:1px solid var(--line);border-radius:11px;padding:15px}.stat .n{font-size:25px;line-height:1.2;font-weight:810;letter-spacing:-.035em}.stat .k{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:5px}.diagram{background:#fbfcfe;border:1px solid var(--line);border-radius:13px;padding:17px;margin:16px 0;overflow:auto}.diagram-title{font-size:12px;color:#5a6d84;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin:0 0 13px}.triptych{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr;gap:7px;align-items:center}.network-box{border:1px solid #c9d8e9;border-radius:10px;padding:13px 8px;background:#f0f5fc;text-align:center;font-size:12px;font-weight:700;min-height:55px}.network-box.green{border-color:#bae2d9;background:#e8f8f5}.network-box.purple{border-color:#d7cdee;background:#f4f0fb}.network-arrow{text-align:center;color:#788da5;font-weight:800;font-size:20px}.timeline{position:relative;margin:6px 0 3px}.timeline::before{content:"";position:absolute;top:17px;bottom:10px;left:38px;border-left:2px dashed #c6d2df}.event{display:grid;grid-template-columns:76px 1fr;gap:12px;position:relative;margin-bottom:13px}.event-num{background:#e9f2ff;border:1px solid #cfe0f6;color:#215ca2;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:11px;min-height:44px;z-index:1}.event-content{border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 13px}.event-content b{font-size:13px}.event-content p{font-size:12.5px;margin:3px 0 0;color:#5a6b7c}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}.btn{border-radius:9px;background:#f2f6fb;border:1px solid #d8e3ee;color:#34546f;font-size:12px;font-weight:740;padding:9px 13px}.btn:hover{background:#eaf1fa}.btn.selected,.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.primary:hover{background:#1553ab}.btn:disabled{opacity:.4;cursor:not-allowed}.mini-tag{display:inline-flex;padding:3px 8px;border-radius:7px;font-size:11px;font-weight:740;background:var(--blue-soft);color:var(--blue)}.mini-tag.green{background:var(--teal-soft);color:var(--teal)}.mini-tag.amber{background:var(--amber-soft);color:var(--amber)}
+    .mono-line{font-family:ui-monospace,monospace;font-size:12px;line-height:1.7}.sequence-cells{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:14px 0}.byte-cell{text-align:center;padding:11px 4px;background:#edf4ff;border:1px solid #dce9fa;border-radius:8px}.byte-cell span{display:block;font-size:20px;font-weight:820;line-height:1.1}.byte-cell small{display:block;font-size:10px;margin-top:5px}.byte-cell.teal{background:var(--teal-soft);border-color:#cfece3}.byte-cell.amber{background:var(--amber-soft);border-color:#f3dfbb}.packet{display:flex;width:100%;border:1px solid #c8d5e4;border-radius:8px;overflow:hidden;min-height:48px;margin:10px 0}.packet-part{display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:7px 3px;border-right:1px solid #fff5;font-size:12px;font-weight:790;line-height:1.25;min-width:0}.packet-part small{font-size:10px;font-weight:500;color:#3d536a}.packet-part.ip{background:#dbeafb}.packet-part.tcp{background:#d9f4ee}.packet-part.data{background:#ffedcb}.packet-part.eth{background:#e6e9ee}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;margin:14px 0} table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:430px} th{background:#f2f6fa;color:#43566d;text-align:left;font-weight:750} th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top} tr:last-child td{border-bottom:0} .caps{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:780}.split-callout{display:grid;grid-template-columns:1fr 1fr;gap:14px}.well{border:1px solid var(--line);border-radius:11px;padding:17px;background:#fbfcff}.well h4{margin:0 0 8px}.well p{font-size:13px;margin:6px 0}.range-wrap{margin:18px 0}.range-label{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;margin-bottom:8px}input[type=range]{width:100%;accent-color:var(--blue)}input[type=number]{border:1px solid #cbd9e7;border-radius:9px;padding:9px;width:114px;background:#fff;color:var(--ink)} .meter{height:24px;border-radius:8px;background:#e9eef5;display:flex;overflow:hidden;border:1px solid #dbe4ef}.meter .filled{background:#4f91dd;transition:width .2s}.meter .empty{flex:1;background:#c9eade}.results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}.result{border:1px solid var(--line);border-radius:9px;padding:11px;background:#f7f9fc}.result b{display:block;font-size:19px;line-height:1.15;letter-spacing:-.025em}.result span{font-size:11px;color:var(--muted)}.bar-list{display:flex;gap:4px;margin:15px 0 7px;align-items:center;flex-wrap:wrap}.bar-item{height:34px;display:flex;align-items:center;justify-content:center;background:#a7d2f2;border:1px solid #85b8df;border-radius:5px;min-width:44px;padding:0 7px;color:#1b4775;font-weight:780;font-size:11px}.bar-item.last{background:#f5deb3;border-color:#e2bd76;color:#8d570e}
+    .hex-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;max-width:520px;margin:12px 0}.hex-byte{border-radius:5px;padding:7px 3px;background:#edf2f9;text-align:center;font:12px ui-monospace,monospace;border:1px solid transparent;cursor:pointer;transition:transform .1s}.hex-byte:hover{transform:translateY(-1px)}.hex-byte.on{border-color:#1959b2;box-shadow:inset 0 0 0 1px #1959b2}.hex-byte.ip{background:#e7f0ff}.hex-byte.port{background:#e2f6f1}.hex-byte.seq{background:#f4ecff}.hex-byte.ack{background:#fff1d9}.hex-byte.flag{background:#fee2e1}.hex-byte.other{background:#edf2f8}.hex-byte.payload{background:#f5dfb3}.hex-detail{background:#f6f9fd;border:1px solid var(--line);border-radius:10px;padding:13px;font-size:13px;min-height:83px}.note{background:#f4f8fc;border:1px solid var(--line);padding:17px;border-radius:11px;margin-top:25px}.note-head{display:flex;align-items:center;justify-content:space-between}.note textarea{width:100%;min-height:72px;resize:vertical;border:1px solid #d6e2ec;border-radius:8px;margin-top:9px;padding:10px 12px;color:var(--ink);background:white;outline:none;font-size:12.5px}.note textarea:focus{border-color:#6299de;box-shadow:0 0 0 3px #daeaff}.note-status{color:var(--teal);font-size:11px}
+    .quiz{border:1px solid var(--line);border-radius:11px;padding:17px;margin:14px 0;background:#fcfdff}.quiz-question{font-weight:750;font-size:13.5px;margin-bottom:12px}.answers{display:grid;gap:7px}.answers button{text-align:left;border:1px solid #dbe4ef;background:white;border-radius:8px;padding:11px 13px;font-size:12.5px;color:var(--ink)}.answers button:hover{border-color:#85afe2}.answers button.right{background:#e0f5ef;border-color:#50ae94}.answers button.wrong{background:#fff0ef;border-color:#db7b78}.feedback{font-size:12.5px;color:#3a6370;margin-top:9px;min-height:0}.feedback:empty{display:none}.source-list{font-size:12.5px;padding-left:21px}.source-list li{margin:8px 0}.mobile-nav{display:none}.print-only{display:none}.to-top{display:inline-flex;margin-top:15px;text-decoration:none;font-size:12px;color:var(--muted)}.status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}.progress-track{height:5px;background:#e3ebf5;border-radius:9px;overflow:hidden;flex:1}.progress-fill{height:100%;background:var(--blue);width:0%;transition:width .2s}.footer{padding:28px 10px 15px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:15px}.compact-title{margin-bottom:6px}.muted{color:var(--muted)}.sep{height:1px;background:var(--line);margin:22px 0}.legend{display:flex;gap:9px;flex-wrap:wrap;font-size:11px;color:var(--muted)}.legend span:before{content:"";width:9px;height:9px;background:var(--blue);display:inline-block;border-radius:3px;margin-right:5px}.legend span:nth-child(2):before{background:var(--teal)}.legend span:nth-child(3):before{background:#d5a248}
+    @media(max-width:1080px){.layout{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:0 17px 70px}.section{padding:27px}.hero{padding:35px}} @media(max-width:750px){.layout{display:block;padding:0 12px 40px}.sidebar{position:static;height:auto;padding:12px 0}.sidebar .side-meta,.sidebar a.nav,.sidebar .side-footer{display:none}.mobile-nav{display:block;margin:11px 6px 0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--muted)}.mobile-nav summary{cursor:pointer;font-weight:740;color:var(--ink)}.mobile-link{display:block;padding:7px 3px;color:#46607c;text-decoration:none;border-bottom:1px solid var(--line)}.brand{margin:0 6px}.hero{margin-top:2px;padding:30px 22px;border-radius:15px}.hero h1{font-size:35px}.hero-visual{grid-template-columns:1fr 18px 1fr 18px 1fr;gap:3px}.hero-node{padding:10px 3px}.hero-node b{font-size:11px}.hero-node span{font-size:9px}.section{padding:23px 19px;margin-top:17px}.section h2{font-size:25px}.grid2,.split-callout{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}.stat .n{font-size:20px}.results{grid-template-columns:1fr 1fr}.hex-grid{grid-template-columns:repeat(8,minmax(0,1fr))}.hex-byte{font-size:10px;padding:5px 1px}.footer{display:block}.triptych{grid-template-columns:1fr 14px 1fr 14px 1fr}.network-box{font-size:10px;padding:10px 4px}}@media print{body{background:white;font-size:12px}.layout{display:block;padding:0}.sidebar{display:none}.hero,.section{box-shadow:none;break-inside:avoid-page;margin:10px 0;border-color:#c9d1db}.hero{padding:18px}.section{padding:20px} .controls,button,input[type=range],.note,.footer{display:none!important}pre{white-space:pre-wrap;font-size:9px}.print-only{display:block}.callout{break-inside:avoid}h2{font-size:23px}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" aria-label="Study guide navigation">
+    <a class="brand" href="#top"><span class="brand-icon">↔</span><span>Network Field Notes</span></a><details class="mobile-nav"><summary>Jump to chapter</summary><div id="mobileNavLinks"></div></details>
+    <div class="side-meta">Study chapters</div>
+    <a class="nav" href="#mental"><span class="nav-index">00</span> The big picture</a>
+    <a class="nav" href="#tcp-setup"><span class="nav-index">01</span> What a TCP connection is</a>
+    <a class="nav" href="#header"><span class="nav-index">02</span> TCP headers & actual bytes</a>
+    <a class="nav" href="#segment"><span class="nav-index">03</span> Segmentation & packet size</a>
+    <a class="nav" href="#order"><span class="nav-index">04</span> Ordering, ACKs, loss</a>
+    <a class="nav" href="#windows"><span class="nav-index">05</span> Flow control & backpressure</a>
+    <a class="nav" href="#kernel"><span class="nav-index">06</span> Linux kernel vs NIC</a>
+    <a class="nav" href="#http"><span class="nav-index">07</span> HTTP over TCP</a>
+    <a class="nav" href="#streams"><span class="nav-index">08</span> SSE & WebSocket</a>
+    <a class="nav" href="#l7"><span class="nav-index">09</span> L7 proxy & stream mappings</a>
+    <a class="nav" href="#l4"><span class="nav-index">10</span> L4 forwarding vs TCP proxy</a>
+    <a class="nav" href="#aws"><span class="nav-index">11</span> AWS NLB vs ALB</a>
+    <a class="nav" href="#walkthrough"><span class="nav-index">12</span> End-to-end walkthrough</a>
+    <a class="nav" href="#quiz"><span class="nav-index">13</span> Knowledge check</a>
+    <a class="nav" href="#reference"><span class="nav-index">14</span> Cheat sheet & sources</a>
+    <div class="side-footer">Self-contained HTML • Offline-friendly<br>Notes save locally in your browser.<div class="status-row"><span id="progressText">0% read</span><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div></div>
+  </aside>
+
+  <main id="top">
+    <header class="hero">
+      <div class="eyebrow">Interactive engineering study guide · October 2026</div>
+      <h1>From TCP bytes to HTTP streams</h1>
+      <p>A systems-level walkthrough of sockets, packet headers, ordering, HTTP keep-alive, Server-Sent Events, WebSocket, backpressure, and L4/L7 load balancing—following the same examples all the way through.</p>
+      <div class="pills"><span class="pill">15 chapters</span><span class="pill">Interactive simulations</span><span class="pill">Packet-level examples</span><span class="pill">Offline & printable</span></div>
+      <div class="hero-visual" aria-label="Client to load balancer to backend">
+        <div class="hero-node"><b>Client</b><span>Application</span></div><div class="hero-arrow">→</div><div class="hero-node"><b>Load balancer</b><span>Forward or proxy</span></div><div class="hero-arrow">→</div><div class="hero-node"><b>Backend</b><span>Application</span></div>
+      </div>
+    </header>
+
+    <section id="mental" class="section">
+      <div class="section-kicker">00 · Foundation</div><h2>The big picture</h2>
+      <p class="lead">Every layer solves a different problem. Confusing a TCP connection with an HTTP request—or an LB's flow mapping with a TCP endpoint—is the source of most networking misconceptions.</p>
+      <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Responsibility</th><th>Important abstraction</th></tr></thead><tbody>
+        <tr><td><b>L7 · Application</b></td><td>HTTP (Hypertext Transfer Protocol), SSE (Server-Sent Events), WebSocket</td><td>Requests, responses, events, messages</td></tr>
+        <tr><td><b>L4 · Transport</b></td><td>TCP (Transmission Control Protocol) / UDP (User Datagram Protocol)</td><td>Ordered byte stream / independent datagrams</td></tr>
+        <tr><td><b>L3 · Network</b></td><td>IP (Internet Protocol)</td><td>Addressed packets & routing</td></tr>
+        <tr><td><b>L2 · Link</b></td><td>Ethernet and related link protocols</td><td>Local network frames</td></tr>
+      </tbody></table></div>
+      <div class="callout"><b>One sentence to memorize:</b> TCP moves an ordered stream of bytes between endpoints. HTTP interprets those bytes as messages. SSE formats one streaming HTTP response; WebSocket introduces a bidirectional framing protocol. A load balancer either forwards the packets or terminates and proxies the connection.</div>
+      <div class="grid3"><div class="stat"><div class="n">1</div><div class="k">TCP connection can carry many HTTP/1.1 requests</div></div><div class="stat"><div class="n">2</div><div class="k">TCP connections for a typical L7 reverse proxy path</div></div><div class="stat"><div class="n">0</div><div class="k">HTTP knowledge required for raw L4 packet forwarding</div></div></div>
+    </section>
+
+    <section id="tcp-setup" class="section">
+      <div class="section-kicker">01 · Transport lifecycle</div><h2>What does an established TCP connection mean?</h2>
+      <p>A connection is <b>logical state in the endpoint operating systems</b>, not a dedicated wire. Both kernels track the peer IP and port, sequence/acknowledgment progress, TCP state, buffers, receive windows, and timers.</p>
+      <div class="diagram"><div class="diagram-title">One example four-tuple</div><div class="triptych"><div class="network-box">Client<br><span class="small">192.0.2.10:50000</span></div><div class="network-arrow">↔</div><div class="network-box purple">IP network<br><span class="small">routers / LBs</span></div><div class="network-arrow">↔</div><div class="network-box green">Server<br><span class="small">198.51.100.20:8080</span></div></div></div>
+      <h3>Three-way handshake</h3>
+      <div class="timeline">
+        <div class="event"><span class="event-num">① SYN</span><div class="event-content"><b>Client → Server: SEQ 1000</b><p>Client announces its Initial Sequence Number (ISN). Client enters <code>SYN-SENT</code>.</p></div></div>
+        <div class="event"><span class="event-num">② SYN-ACK</span><div class="event-content"><b>Server → Client: SEQ 5000, ACK 1001</b><p>Server selects its own ISN and acknowledges client's SYN. Server enters <code>SYN-RECEIVED</code>.</p></div></div>
+        <div class="event"><span class="event-num">③ ACK</span><div class="event-content"><b>Client → Server: SEQ 1001, ACK 5001</b><p>Final acknowledgment. The client is now <code>ESTABLISHED</code>; the server becomes established when it receives this ACK.</p></div></div>
+      </div>
+      <p><b>Why +1?</b> SYN consumes one sequence number, even when it has no application payload. A pure ACK consumes zero sequence numbers.</p>
+      <h3>Graceful close</h3>
+      <div class="table-wrap"><table><thead><tr><th>Step</th><th>Segment</th><th>Effect</th></tr></thead><tbody>
+        <tr><td>1</td><td>Client FIN, SEQ 1006</td><td>Client closes its sending direction; FIN consumes one sequence number</td></tr>
+        <tr><td>2</td><td>Server ACK 1007</td><td>Server acknowledges client's finish; its sending direction may still be open</td></tr>
+        <tr><td>3</td><td>Server FIN, SEQ 5003</td><td>Server finishes its sending direction</td></tr>
+        <tr><td>4</td><td>Client ACK 5004</td><td>Both directions closed; active closer commonly enters <code>TIME-WAIT</code></td></tr>
+      </tbody></table></div>
+      <div class="callout teal"><b>Half-close:</b> TCP is full duplex. Each direction can finish independently. When all buffered data is consumed after a peer's FIN, <code>recv()</code> returns zero bytes. A reset (<code>RST</code>) is an abort, not graceful FIN shutdown.</div>
+      <div class="note"><div class="note-head"><b>Your notes — TCP lifecycle</b><span class="note-status">Saved locally</span></div><textarea data-note="tcp-setup" placeholder="What is established? Why does FIN consume a sequence number?"></textarea></div>
+    </section>
+
+    <section id="header" class="section">
+      <div class="section-kicker">02 · Wire format</div><h2>What's actually inside a TCP packet?</h2>
+      <p>In this simple IPv4 example, an IP packet contains an IPv4 header, then a TCP header, followed by zero or more application bytes.</p>
+      <div class="packet"><div class="packet-part ip" style="flex:1">IPv4 header<small>20 B</small></div><div class="packet-part tcp" style="flex:1">TCP header<small>20 B minimum</small></div><div class="packet-part data" style="flex:2.5">Application payload<small>Variable length</small></div></div>
+      <div class="table-wrap"><table><thead><tr><th>TCP field</th><th>Width</th><th>Meaning</th></tr></thead><tbody>
+      <tr><td>Source/destination ports</td><td>16 + 16 bits</td><td>Application endpoints</td></tr><tr><td>Sequence number</td><td>32 bits</td><td>First payload byte's stream position (or ISN for SYN)</td></tr><tr><td>Acknowledgment number</td><td>32 bits</td><td>Next sequence number expected from the peer</td></tr><tr><td>Data offset</td><td>4 bits</td><td>Header size in 32-bit words</td></tr><tr><td>Control flags</td><td>Bits</td><td>SYN, ACK, FIN, RST, PSH, etc.</td></tr><tr><td>Receive window</td><td>16 bits</td><td>Advertised acceptable byte range, optionally scaled</td></tr><tr><td>Checksum</td><td>16 bits</td><td>Error detection for TCP pseudo-header + segment</td></tr><tr><td>Urgent pointer</td><td>16 bits</td><td>Legacy urgent-data mechanism</td></tr>
+      </tbody></table></div>
+      <h3>Decode a real 40-byte illustrative SYN packet</h3>
+      <p class="small">Tap any byte to inspect its field. All values are internally consistent: a 20-byte IPv4 header + a 20-byte TCP header; no payload or TCP options.</p>
+      <div class="diagram"><div class="diagram-title">Hexadecimal bytes · click to inspect</div><div id="hexGrid" class="hex-grid" role="group" aria-label="Illustrative TCP SYN packet hex bytes"></div><div id="hexDetail" class="hex-detail" aria-live="polite"></div></div>
+      <pre><code>45 00 00 28 12 34 40 00 40 06 3c 4a c0 00 02 0a
+c6 33 64 14 c3 50 1f 90 00 00 03 e8 00 00 00 00
+50 02 ff ff dc c7 00 00</code></pre>
+      <p>For example, at TCP offsets 4–7, <code>00 00 03 e8</code> equals sequence number 1000. At TCP offsets 12–13, <code>50 02</code> indicates a 20-byte TCP header with SYN set. IPv4's protocol value <code>06</code> means TCP.</p>
+      <div class="callout amber"><b>Important distinction:</b> the TCP header has no standalone payload-length field. Over IPv4, calculate payload length as <b>IP total length − IP header length − TCP header length</b> (assuming the complete reassembled IP payload).</div>
+    </section>
+
+    <section id="segment" class="section">
+      <div class="section-kicker">03 · Packet sizing</div><h2>How does TCP split application bytes?</h2>
+      <p>A single application <code>send()</code> is not a single TCP packet. TCP divides its continuous byte stream into segments, with variable payload sizes constrained by the network path and endpoint capabilities.</p>
+      <div class="grid3"><div class="stat"><div class="n">1,500 B</div><div class="k">Common Ethernet MTU</div></div><div class="stat"><div class="n">20 B</div><div class="k">Minimum IPv4 header</div></div><div class="stat"><div class="n">20 B</div><div class="k">Minimum TCP header</div></div></div>
+      <p><b>MTU</b> = Maximum Transmission Unit. <b>MSS</b> = Maximum Segment Size, the TCP data payload size. Under our simplified 1,500-byte IPv4/Ethernet assumption, <code>1500 - 20 - 20 = 1460 bytes</code>.</p>
+      <div class="diagram">
+        <div class="diagram-title">Interactive TCP segmentation</div>
+        <div class="grid2"><div><label class="caps" for="payloadSize">Application write (bytes)</label><br><input id="payloadSize" type="number" min="1" max="200000" value="4000"></div><div><label class="caps" for="mtuSize">IP path MTU (bytes)</label><br><select id="mtuSize" style="padding:9px;border:1px solid #cbd9e7;border-radius:9px;background:white"><option value="1500">1500 — standard</option><option value="1400">1400 — tunnel</option><option value="9000">9000 — jumbo (if supported)</option></select></div></div>
+        <div class="results" id="segmentStats"></div><div class="bar-list" id="segmentBars"></div><div class="small" id="segmentHint"></div>
+      </div>
+      <div class="callout"><b>The packet size is variable.</b> A 5-byte write may be sent in one small segment. A 4,000-byte write could become 1,460 + 1,460 + 1,080 bytes of TCP payload. Small writes may be coalesced; segmentation offload may move segmentation work to the Network Interface Card (NIC).</div>
+      <p>The TCP sequence number advances by the <b>payload bytes sent</b>, not by the number of packets. For payloads of 1,460, 1,460, and 1,080 starting at SEQ 1001, segment starts are <code>1001</code>, <code>2461</code>, and <code>3921</code>.</p>
+    </section>
+
+    <section id="order" class="section">
+      <div class="section-kicker">04 · Reliability</div><h2>Sequence numbers, out-of-order packets, and ACKs</h2>
+      <p>TCP sequence numbers identify <b>byte positions</b>, not packet indices. The receiving kernel can buffer later bytes until missing earlier bytes arrive, producing an ordered stream to the application.</p>
+      <div class="sequence-cells" aria-label="Byte sequence numbers">
+        <div class="byte-cell"><span>H</span><small>1001</small></div><div class="byte-cell"><span>E</span><small>1002</small></div><div class="byte-cell"><span>L</span><small>1003</small></div><div class="byte-cell"><span>L</span><small>1004</small></div><div class="byte-cell"><span>O</span><small>1005</small></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Segment</th><th>Payload</th><th>SEQ</th><th>Sequence range</th></tr></thead><tbody><tr><td>A</td><td><code>HELLO</code></td><td>1001</td><td>1001–1005</td></tr><tr><td>B</td><td><code>WORLD</code></td><td>1006</td><td>1006–1010</td></tr><tr><td>C</td><td><code>AGAIN</code></td><td>1011</td><td>1011–1015</td></tr></tbody></table></div>
+      <div class="diagram">
+        <div class="diagram-title">Interactive simulation · arrival order A → C → B</div>
+        <div class="controls"><button class="btn selected" data-order="0">1. A arrives</button><button class="btn" data-order="1">2. C arrives early</button><button class="btn" data-order="2">3. B fills gap</button></div>
+        <div class="grid3"><div class="well"><div class="caps">SEQ 1001–1005</div><b id="ordA">HELLO</b></div><div class="well"><div class="caps">SEQ 1006–1010</div><b id="ordB" class="muted">missing</b></div><div class="well"><div class="caps">SEQ 1011–1015</div><b id="ordC" class="muted">not arrived</b></div></div>
+        <div class="results"><div class="result"><b id="ordAck">1006</b><span>Cumulative ACK</span></div><div class="result"><b id="ordNext">1006</b><span>Next expected byte</span></div><div class="result"><b id="ordApp">HELLO</b><span>Application-visible contiguous data</span></div></div>
+        <p id="ordExplainer" class="small"></p>
+      </div>
+      <p><b>ACK = Acknowledgment.</b> ACK 1006 means "all bytes before 1006 arrived; send me 1006 next." If C arrives ahead of B, the ordinary cumulative ACK remains 1006. Once B arrives, it jumps to 1016.</p>
+      <div class="grid2"><div class="well"><h4>Packet loss</h4><p>Missing bytes can be retransmitted with their <b>original</b> sequence numbers. TCP detects missing data through acknowledgment signals and/or timers.</p></div><div class="well"><h4>Duplicate packets</h4><p>TCP uses sequence ranges to avoid delivering retransmitted data twice. SACK (Selective Acknowledgment) can also report out-of-order ranges.</p></div></div>
+      <div class="callout teal">A 32-bit sequence number wraps modulo <code>2³²</code>. It never grows into a bigger field or gets more expensive to increment. TCP's ordered-delivery guarantee applies to bytes successfully delivered before a connection fails.</div>
+    </section>
+
+    <section id="windows" class="section">
+      <div class="section-kicker">05 · Flow control</div><h2>Can TCP backpressure a sender?</h2>
+      <p>Yes. The receiver advertises a <b>receive window</b> (<code>rwnd</code>) in the TCP header. This tells the peer what additional byte range it may send without overflowing the receiver's available space.</p>
+      <div class="diagram"><div class="diagram-title">Adjust an illustrative 64 KiB receive buffer</div><div class="range-label"><span>Used receive buffer</span><span id="bufferUsedText">16 / 64 KiB</span></div><div class="meter"><div class="filled" id="bufferFilled" style="width:25%"></div><div class="empty"></div></div><div class="range-wrap"><input type="range" id="bufferSlider" min="0" max="64" step="8" value="16"></div><div class="results"><div class="result"><b id="bufferFree">48 KiB</b><span>Available space</span></div><div class="result"><b id="bufferWindow">49,152</b><span>Illustrative advertised window (bytes)</span></div><div class="result"><b id="bufferState">OPEN</b><span>Receiver status</span></div></div><p class="small" id="bufferExplain"></p></div>
+      <div class="callout amber"><b>Not a literal buffer dump:</b> only a 16-bit <b>Window Size</b> value is placed in the TCP header (plus scaling negotiated in SYN options). The simulator shows an <i>effective</i> window; advertising 65,536 bytes requires scaling or a different window-management choice. The receiver's actual memory buffer is never sent over the network.</div>
+      <h3>How slow-client pressure crosses an L7 proxy</h3>
+      <div class="diagram"><div class="triptych"><div class="network-box green">Backend<br><span class="small">SSE producer</span></div><div class="network-arrow">→</div><div class="network-box purple">L7 LB<br><span class="small">Two sockets</span></div><div class="network-arrow">→</div><div class="network-box">Browser<br><span class="small">Slow reader</span></div></div><div class="sep"></div><div class="timeline"><div class="event"><span class="event-num">01</span><div class="event-content"><b>Browser's receive capacity shrinks</b><p>Its TCP receive window becomes smaller.</p></div></div><div class="event"><span class="event-num">02</span><div class="event-content"><b>LB can't drain outgoing data fast enough</b><p>The downstream send queue fills; a backpressure-aware proxy pauses upstream reads.</p></div></div><div class="event"><span class="event-num">03</span><div class="event-content"><b>LB's upstream receive window shrinks</b><p>The backend is constrained by its own peer: the LB. Pressure propagates, but the proxy must implement the bridge.</p></div></div></div></div>
+      <div class="split-callout"><div class="well"><h4>Flow control</h4><p>Protects a <b>receiver</b>. Driven by advertised receive window (<code>rwnd</code>).</p></div><div class="well"><h4>Congestion control</h4><p>Protects the <b>network</b>. Uses congestion-window concepts (<code>cwnd</code>) and network feedback.</p></div></div>
+    </section>
+
+    <section id="kernel" class="section">
+      <div class="section-kicker">06 · Implementation</div><h2>Who actually implements TCP?</h2>
+      <p>Normally the <b>Linux kernel</b>, not your HTTP framework and not the Network Interface Card (NIC). A TCP server's application uses socket system calls; the kernel handles the TCP state machine and byte-stream reliability.</p>
+      <div class="diagram"><div class="diagram-title">One Linux host, top → bottom</div><div class="network-box">Application · Python / Java / Netty / Nginx<br><span class="small">HTTP parsing, business logic, socket read/write</span></div><div style="text-align:center;color:var(--muted)">↓ socket() / bind() / listen() / accept() / recv() / send()</div><div class="network-box green">Linux kernel · socket / TCP / IP stack<br><span class="small">Handshake, ACKs, retransmission, reordering, buffers, routing</span></div><div style="text-align:center;color:var(--muted)">↓ device driver, Direct Memory Access (DMA)</div><div class="network-box purple">NIC · hardware<br><span class="small">Ethernet frames, transmit/receive queues, checksum & segmentation offload</span></div></div>
+      <p>For a listener, the kernel can complete the three-way handshake and queue an established socket for <code>accept()</code>. The application does not manually parse incoming SYN packets.</p>
+      <div class="table-wrap"><table><thead><tr><th>Linux source</th><th>What to study</th></tr></thead><tbody>
+        <tr><td><a href="https://github.com/torvalds/linux/blob/master/net/ipv4/tcp_input.c" target="_blank" rel="noopener">tcp_input.c ↗</a></td><td>Incoming segments, ACK processing, receive-side logic</td></tr><tr><td><a href="https://github.com/torvalds/linux/blob/master/net/ipv4/tcp_output.c" target="_blank" rel="noopener">tcp_output.c ↗</a></td><td>Outgoing TCP segment construction</td></tr><tr><td><a href="https://github.com/torvalds/linux/blob/master/net/ipv4/tcp_timer.c" target="_blank" rel="noopener">tcp_timer.c ↗</a></td><td>TCP timers / retransmission support</td></tr>
+      </tbody></table></div>
+      <p class="small">An event-driven server using <code>epoll</code> can manage many TCP sockets without one OS thread per connection. Netty is a Java networking framework; its TCP server uses kernel TCP, and its HTTP codecs add HTTP parsing in user space.</p>
+    </section>
+
+    <section id="http" class="section">
+      <div class="section-kicker">07 · Application protocol</div><h2>HTTP is messages carried by a TCP byte stream</h2>
+      <p>HTTP/1.1 is a text-framed application protocol. TCP provides ordered bytes; HTTP supplies the rules for recognizing request lines, response headers, message bodies, and message boundaries.</p>
+      <div class="grid2"><div><h4>Request</h4><pre><code>GET /a HTTP/1.1\r\n
+Host: example.com\r\n
+\r\n</code></pre></div><div><h4>Response</h4><pre><code>HTTP/1.1 200 OK\r\n
+Content-Length: 2\r\n
+\r\n
+OK</code></pre></div></div>
+      <p><code>\r\n</code> denotes carriage-return and line-feed bytes. A blank header line (<code>\r\n\r\n</code>) ends the header block. <code>Content-Length</code> tells the parser how many response-body bytes to consume.</p>
+      <div class="diagram"><div class="diagram-title">Keep-alive: multiple HTTP/1.1 requests, same TCP connection</div><div class="timeline"><div class="event"><span class="event-num">SYN</span><div class="event-content"><b>TCP established once</b><p>Client ↔ server exchange initial sequence numbers.</p></div></div><div class="event"><span class="event-num">GET #1</span><div class="event-content"><b>Request /a → response “OK”</b><p>Client and server advance their <i>independent</i> TCP sequence numbers.</p></div></div><div class="event"><span class="event-num">GET #2</span><div class="event-content"><b>Request /b → response “HI”</b><p>No new handshake; the same sockets remain ESTABLISHED.</p></div></div><div class="event"><span class="event-num">FIN</span><div class="event-content"><b>TCP closes later</b><p>After idle timeout, <code>Connection: close</code>, or another close decision.</p></div></div></div></div>
+      <div class="callout"><b>TCP is stateful; HTTP is stateless in a different sense.</b> TCP keeps transport state (sequence numbers, buffers, ACKs). HTTP doesn't automatically remember your identity, login, or shopping cart. Apps may implement sessions with cookies, tokens, or storage—and those sessions can survive TCP reconnects.</div>
+      <h3>What HTTP/2 changes</h3>
+      <p>HTTP/2 allows <b>multiple independently identified HTTP streams</b> to share one TCP connection through binary frames. A long-lived stream can coexist with ordinary requests. They still share TCP's ordered byte delivery, so TCP loss can stall them collectively.</p>
+      <div class="packet"><div class="packet-part ip" style="flex:1">HTTP/2<br>stream 1</div><div class="packet-part tcp" style="flex:1">stream 3</div><div class="packet-part ip" style="flex:1">stream 1</div><div class="packet-part data" style="flex:1">stream 5</div><div class="packet-part tcp" style="flex:1">stream 3</div></div>
+      <p class="small">HTTP/3 uses QUIC (a transport built over UDP) instead of TCP. HTTPS over TCP adds TLS (Transport Layer Security) between HTTP and TCP.</p>
+    </section>
+
+    <section id="streams" class="section">
+      <div class="section-kicker">08 · Streaming protocols</div><h2>SSE is a streaming HTTP response; WebSocket is a separate messaging protocol</h2>
+      <div class="split-callout"><div class="well"><h4>Server-Sent Events (SSE)</h4><p>One long-lived HTTP response. Events flow <b>server → client</b> within an HTTP response body.</p><pre><code>HTTP/1.1 200 OK
+Content-Type: text/event-stream
+
+data: Hello
+
+data: World
+
+</code></pre></div><div class="well"><h4>WebSocket</h4><p>Classic HTTP/1.1 upgrade negotiates WebSocket. After <code>101</code>, bidirectional <b>WebSocket frames</b> replace ordinary HTTP request/response messages.</p><pre><code>GET /chat HTTP/1.1
+Upgrade: websocket
+Connection: Upgrade
+
+HTTP/1.1 101 Switching Protocols
+...</code></pre></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Feature</th><th>HTTP request / response</th><th>SSE</th><th>WebSocket</th></tr></thead><tbody>
+        <tr><td>Application pattern</td><td>Client request → server response</td><td>One response continuously emits events</td><td>Either side sends frames</td></tr><tr><td>HTTP throughout?</td><td>Yes</td><td>Yes</td><td>Classic HTTP/1.1 upgrade then WebSocket framing</td></tr><tr><td>Message boundaries</td><td>HTTP framing</td><td><code>\n\n</code> event delimiter</td><td>WebSocket framing</td></tr><tr><td>Ordered while stream healthy?</td><td>Yes</td><td>Yes</td><td>Yes, over TCP-based WebSocket</td></tr><tr><td>Reconnect/replay</td><td>App-specific</td><td>EventSource reconnects; replay is server-defined</td><td>App-specific</td></tr>
+      </tbody></table></div>
+      <h3>Why SSE ordering isn't durable event delivery</h3>
+      <pre><code>id: 41
+data: job started
+
+id: 42
+data: step finished
+
+id: 43
+data: job completed
+
+</code></pre>
+      <p>If the connection drops after event 42, a browser's <code>EventSource</code> can reconnect with <code>Last-Event-ID: 42</code>. The server must maintain event history and implement replay if the client is supposed to receive event 43. TCP only guarantees ordering of bytes successfully delivered <em>inside</em> a connection.</p>
+      <div class="callout teal"><b>SSE is not “one event = one TCP packet.”</b> An SSE event can span segments, or multiple events can share a segment. HTTP/SSE framing is what reconstructs application events.</div>
+    </section>
+
+    <section id="l7" class="section">
+      <div class="section-kicker">09 · Application-layer load balancing</div><h2>How L7 proxies map requests and streaming responses</h2>
+      <p>An L7 reverse proxy is a TCP server to its downstream client and a TCP client to its upstream backend. It can inspect HTTP and select a backend based on host, path, headers, or other HTTP attributes.</p>
+      <div class="diagram"><div class="diagram-title">Conventional L7 HTTP reverse proxy</div><div class="triptych"><div class="network-box">Browser<br><span class="small">Downstream client</span></div><div class="network-arrow">↔</div><div class="network-box purple">L7 proxy<br><span class="small">HTTP-aware</span></div><div class="network-arrow">↔</div><div class="network-box green">Backend<br><span class="small">Upstream server</span></div></div><div class="grid2" style="margin-top:13px"><div class="well"><div class="caps">TCP connection 1</div><div class="small">Browser ↔ LB</div><p class="small">Own sequence numbers, ACKs, windows</p></div><div class="well"><div class="caps">TCP connection 2</div><div class="small">LB ↔ Backend</div><p class="small">Independent sequence numbers, ACKs, windows</p></div></div></div>
+      <p>For an SSE response, the proxy must maintain an association between the incoming request/response and its chosen upstream exchange until the streaming response ends:</p>
+      <pre><code>downstream_http_exchange → upstream_http_exchange
+client stream #1        → backend stream #7
+client stream #3        → backend stream #9</code></pre>
+      <p>With HTTP/1.1, each active SSE response ordinarily occupies its connection. With HTTP/2, multiple SSE responses can be separate logical streams on one TCP connection, so the mapping is <b>stream-to-stream, not necessarily socket-to-socket</b>.</p>
+      <div class="callout amber"><b>Streaming gotcha:</b> The proxy may buffer response data, delay events, or hit idle timeouts. It should stream incrementally and manage backpressure. It doesn't have to parse SSE event contents to relay the bytes.</div>
+    </section>
+
+    <section id="l4" class="section">
+      <div class="section-kicker">10 · Transport-layer load balancing</div><h2>L4 packet forwarding vs. an L4 TCP proxy</h2>
+      <p>L4 means routing decisions are based on transport/network information—not HTTP content. But <b>L4 does not tell you whether the balancer terminates TCP.</b> These are two distinct implementation strategies.</p>
+      <div class="split-callout">
+        <div class="well"><span class="mini-tag green">Architecture A · packet forwarding</span><h4>One end-to-end TCP connection</h4><div class="triptych" style="margin:15px 0"><div class="network-box">Client</div><div class="network-arrow">→</div><div class="network-box purple">LB</div><div class="network-arrow">→</div><div class="network-box green">Server</div></div><p>LB selects the backend, then forwards/rewrites packets (e.g. Destination NAT). The original SYN and sequence numbers continue to the backend.</p><p class="small"><b>Endpoint TCP states:</b> client + backend. <b>LB state:</b> flow mapping / tracking, not a retransmitting TCP endpoint.</p></div>
+        <div class="well"><span class="mini-tag">Architecture B · TCP proxy</span><h4>Two distinct TCP connections</h4><div class="triptych" style="margin:15px 0"><div class="network-box">Client</div><div class="network-arrow">↔</div><div class="network-box purple">LB</div><div class="network-arrow">↔</div><div class="network-box green">Server</div></div><p>LB accepts the client's TCP stream and opens or uses a separate TCP stream toward the backend. Each has independent SEQ/ACK and buffers.</p><p class="small"><b>Endpoint TCP states:</b> client + both LB sides + backend. <b>LB state:</b> full TCP endpoints and stream mapping.</p></div>
+      </div>
+      <h3>Actual packet rewriting with Destination NAT (DNAT)</h3>
+      <div class="diagram"><div class="diagram-title">Illustrative SYN in Architecture A</div><div class="well"><div class="caps">Packet before L4 load balancer</div><div class="mono-line">203.0.113.10:50000 → 198.51.100.50:443</div><div class="small">TCP SYN · SEQ 1000</div></div><div style="text-align:center;margin:9px;font-size:12px;color:var(--muted)">↓ rewrite destination IP + adjust checksum</div><div class="well"><div class="caps">Same TCP SYN after DNAT</div><div class="mono-line">203.0.113.10:50000 → 10.0.0.11:443</div><div class="small">TCP SYN · SEQ <b>1000 unchanged</b></div></div><p class="small">On the response path, reverse translation makes replies appear to come from the service virtual IP. Return-path routing must support this.</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Resource / capability</th><th>A: forwarding</th><th>B: TCP proxy</th></tr></thead><tbody>
+        <tr><td>TCP handshakes</td><td>Client ↔ backend (via LB)</td><td>Client ↔ LB; LB ↔ backend</td></tr><tr><td>LB sequence-number-based retransmissions</td><td>No</td><td>Yes, each LB TCP endpoint</td></tr><tr><td>Flow/affinity mapping</td><td>Commonly yes</td><td>Yes</td></tr><tr><td>HTTP URL-based routing</td><td>No</td><td>No unless an L7 parser is added</td></tr><tr><td>Per-connection overhead at LB</td><td>Usually lower</td><td>Usually higher</td></tr><tr><td>Can transparently move a live flow to a state-free backend?</td><td>No</td><td>Not ordinarily</td></tr>
+      </tbody></table></div>
+      <div class="callout"><b>Why passing through the LB doesn't create another connection:</b> The internet already sends TCP through many routers. Number of network hops ≠ number of TCP connections. An additional TCP connection exists only when the intermediate device participates as a TCP endpoint.</div>
+      <p><b>DSR (Direct Server Return)</b> is another L4 variation: the LB handles inbound traffic and the backend sends replies directly to the client using the service IP identity. This reduces LB response bandwidth but requires suitable network configuration.</p>
+    </section>
+
+    <section id="aws" class="section">
+      <div class="section-kicker">11 · AWS example</div><h2>AWS NLB vs. ALB: what changes?</h2>
+      <p><b>NLB</b> = Network Load Balancer; <b>ALB</b> = Application Load Balancer. NLB makes flow-oriented decisions; ALB is an HTTP-aware application proxy.</p>
+      <div class="table-wrap"><table><thead><tr><th>AWS configuration</th><th>Conceptual path</th><th>Important nuance</th></tr></thead><tbody>
+        <tr><td><b>NLB TCP listener</b></td><td>L4 TCP pass-through / forwarding model</td><td>No HTTP parsing; backend selected for life of TCP flow</td></tr>
+        <tr><td><b>NLB TLS listener</b></td><td>TLS/TCP termination at NLB; separate upstream TCP connection</td><td>TLS listener acts as a terminating proxy</td></tr>
+        <tr><td><b>ALB HTTP/HTTPS listener</b></td><td>L7 HTTP reverse proxy</td><td>Can route by HTTP properties and manage independent frontend/backend connections</td></tr>
+      </tbody></table></div>
+      <div class="callout teal"><b>AWS documented facts:</b> For TCP traffic, NLB selects one target for a connection's lifetime using a flow hash. NLB TCP idle timeout defaults to <b>350 seconds</b> and can be configured to <b>60–6,000 seconds</b>. TLS termination at NLB also terminates the TCP connection and establishes an upstream TCP connection.</div>
+      <p>Client IP preservation depends on target type and target group protocol. For example, AWS documents it enabled by default for <b>instance-type TCP</b> target groups and disabled by default for <b>IP-type TCP</b> target groups. That changes what source IP the target sees, not the conceptual difference between forwarding and proxy termination.</p>
+      <p class="small">AWS internal packet-processing and flow-state implementation details are not fully public; these descriptions are networking models consistent with AWS's documented external behavior. See the primary AWS references at the end of this guide.</p>
+    </section>
+
+    <section id="walkthrough" class="section">
+      <div class="section-kicker">12 · Synthesis</div><h2>Walk through one long-lived SSE connection</h2>
+      <p>Now combine everything: a browser opens <code>GET /events</code>, a backend emits updates, and a load balancer stands between them.</p>
+      <div class="diagram"><div class="diagram-title">Choose architecture to inspect</div><div class="controls"><button class="btn selected" data-arch="l7">L7 reverse proxy</button><button class="btn" data-arch="l4">L4 packet forwarding</button></div><div class="grid3"><div class="well"><div class="caps">Client</div><b>Browser</b><p class="small">EventSource + TCP</p></div><div class="well"><div class="caps">Middlebox</div><b id="walkMiddle">L7 LB</b><p class="small" id="walkMidDescription">HTTP-aware proxy</p></div><div class="well"><div class="caps">Backend</div><b>SSE server</b><p class="small">Generates events</p></div></div><div class="results"><div class="result"><b id="walkTcp">2</b><span>TCP connections across path</span></div><div class="result"><b id="walkMapping">HTTP exchange</b><span>LB mapping granularity</span></div><div class="result"><b id="walkBackpressure">Bridged</b><span>TCP backpressure</span></div></div><div id="walkDetails" class="small"></div></div>
+      <h3>What happens if the backend dies?</h3><p>With either model, an ongoing stream tied to that backend normally breaks. The LB can't make a different server magically inherit the original TCP sequence state or unfinished SSE response. The browser can reconnect; reliable missed-event recovery needs <code>id</code>, <code>Last-Event-ID</code>, and a replay-capable application.</p>
+      <h3>What happens if the client is slow?</h3><p>With L4 forwarding, TCP flow control works between the client and backend. With an L7 proxy, flow control applies separately to both TCP legs; the proxy must bridge downstream pressure into upstream read throttling.</p>
+      <div class="note"><div class="note-head"><b>Your synthesis notes</b><span class="note-status">Saved locally</span></div><textarea data-note="walkthrough" placeholder="Write the difference between flow tracking and a TCP endpoint in your own words..."></textarea></div>
+    </section>
+
+    <section id="quiz" class="section">
+      <div class="section-kicker">13 · Active recall</div><h2>Check your understanding</h2>
+      <p>Choose an answer to see an explanation. All checks work offline.</p><div id="quizArea"></div><div class="status-row"><button class="btn primary" id="resetQuiz">Reset answers</button><span id="quizScore" class="small">0 of 8 answered</span></div>
+    </section>
+
+    <section id="reference" class="section">
+      <div class="section-kicker">14 · Reference</div><h2>Cheat sheet & further reading</h2>
+      <div class="table-wrap"><table><thead><tr><th>Term</th><th>Remember</th></tr></thead><tbody>
+        <tr><td>TCP four-tuple</td><td>Source IP + source port + destination IP + destination port</td></tr><tr><td>SEQ / ACK</td><td>First byte position / next byte expected</td></tr><tr><td>SYN / FIN</td><td>Establish sequence space / finish sending direction</td></tr><tr><td>MTU / MSS</td><td>Link/path IP packet bound / negotiated effective TCP payload bound</td></tr><tr><td>rwnd / cwnd</td><td>Receiver flow-control window / sender congestion-control window</td></tr><tr><td>HTTP keep-alive</td><td>Reuse TCP connection for multiple HTTP messages</td></tr><tr><td>HTTP/2 multiplexing</td><td>Many HTTP streams interleaved over one TCP connection</td></tr><tr><td>SSE</td><td>One long-lived HTTP response containing event-formatted data</td></tr><tr><td>WebSocket</td><td>Full-duplex framed messages after negotiation</td></tr><tr><td>L4 forwarding</td><td>Route/translate packets; usually preserve end-to-end TCP endpoint relationship</td></tr><tr><td>L4 TCP proxy / L7 proxy</td><td>Terminate client transport and use separate upstream transport</td></tr><tr><td>Connection state vs. application state</td><td>TCP reliability state ≠ login/user session state</td></tr>
+      </tbody></table></div>
+      <h3>Commands worth trying on Linux</h3>
+      <pre><code># Show established TCP sockets and process owners
+ss -tnp
+
+# Inspect all TCP listeners
+ss -ltn
+
+# Capture packet headers + hex on loopback
+sudo tcpdump -i lo -nn -s 0 -XX 'tcp port 8080'
+
+# Check MTU (replace eth0 with your interface)
+ip link show eth0
+
+# Check NIC offload features
+ethtool -k eth0
+
+# Test streamed HTTP response headers + body
+curl -N -i http://localhost:8080/events</code></pre>
+      <h3>Primary references</h3>
+      <ol class="source-list">
+        <li><a href="https://www.rfc-editor.org/rfc/rfc9293.html" target="_blank" rel="noopener">RFC 9293 — Transmission Control Protocol</a>: header layout, sequence/ACK semantics, connection states, receive window, termination.</li>
+        <li><a href="https://www.rfc-editor.org/rfc/rfc7323.html" target="_blank" rel="noopener">RFC 7323 — TCP Extensions for High Performance</a>: window scaling, timestamps and wraparound protection.</li>
+        <li><a href="https://www.rfc-editor.org/rfc/rfc9112.html" target="_blank" rel="noopener">RFC 9112 — HTTP/1.1</a>: persistent connections and body-length framing.</li>
+        <li><a href="https://www.rfc-editor.org/rfc/rfc9113.html" target="_blank" rel="noopener">RFC 9113 — HTTP/2</a>: multiplexed streams and frame model.</li>
+        <li><a href="https://html.spec.whatwg.org/multipage/server-sent-events.html" target="_blank" rel="noopener">WHATWG HTML Standard — Server-Sent Events</a>: EventSource, event framing, Last-Event-ID and reconnection.</li>
+        <li><a href="https://www.rfc-editor.org/rfc/rfc6455.html" target="_blank" rel="noopener">RFC 6455 — WebSocket Protocol</a>: upgrade handshake and frame layout.</li>
+        <li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html" target="_blank" rel="noopener">AWS — Network Load Balancer overview</a>: TCP flow hashing and target selection.</li>
+        <li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html" target="_blank" rel="noopener">AWS — Network Load Balancers</a>: idle timeout and flow behavior.</li>
+        <li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-health-checks.html" target="_blank" rel="noopener">AWS — NLB target health checks</a>: explicit explanation that TLS termination also terminates TCP.</li>
+        <li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html" target="_blank" rel="noopener">AWS — NLB target group attributes</a>: preserve-client-IP defaults.</li>
+      </ol>
+      <div class="note"><div class="note-head"><b>Personal study notes</b><span class="note-status">Saved locally</span></div><textarea data-note="reference" placeholder="Questions to investigate next... e.g. epoll wakeups, packet forwarding in XDP/eBPF, TCP zero-window probes"></textarea><div class="controls"><button class="btn" id="exportNotes">Export my notes (.txt)</button><button class="btn" onclick="window.print()">Print / Save as PDF</button></div><div class="small">Notes are stored in this browser via localStorage when available. For portability, export them as a text file.</div></div>
+      <a href="#top" class="to-top">↑ Back to top</a>
+    </section>
+    <footer class="footer"><span>Network Field Notes · HTML learning package · 2026</span><span>All diagrams, styles, and interactions are embedded. No libraries or network requests required.</span></footer>
+  </main>
+</div>
+<script>
+(function(){'use strict';
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  $$('.sidebar a.nav').forEach(a=>{let link=document.createElement('a');link.className='mobile-link';link.href=a.href;link.textContent=a.textContent;link.addEventListener('click',()=>{$('.mobile-nav').open=false});$('#mobileNavLinks').appendChild(link)});
+  // Packet bytes: checked IPv4+TCP header for 192.0.2.10:50000 -> 198.51.100.20:8080 SYN, SEQ=1000.
+  const hex='45 00 00 28 12 34 40 00 40 06 3c 4a c0 00 02 0a c6 33 64 14 c3 50 1f 90 00 00 03 e8 00 00 00 00 50 02 ff ff dc c7 00 00'.split(' ');
+  const hexFields=[
+    {start:0,end:0,color:'ip',label:'IPv4 version and header size',detail:'0x45 = IPv4 and a 5×4 = 20-byte IPv4 header.'},
+    {start:2,end:3,color:'ip',label:'IPv4 total packet size',detail:'0x0028 = 40 bytes: 20-byte IPv4 + 20-byte TCP. No payload.'},
+    {start:9,end:9,color:'ip',label:'IPv4 protocol',detail:'0x06 = protocol number 6 = TCP.'},
+    {start:12,end:15,color:'ip',label:'Source IPv4 address',detail:'c0 00 02 0a = 192.0.2.10.'},
+    {start:16,end:19,color:'ip',label:'Destination IPv4 address',detail:'c6 33 64 14 = 198.51.100.20.'},
+    {start:20,end:21,color:'port',label:'TCP source port',detail:'c3 50 = 50,000.'},
+    {start:22,end:23,color:'port',label:'TCP destination port',detail:'1f 90 = 8,080.'},
+    {start:24,end:27,color:'seq',label:'TCP sequence number',detail:'00 00 03 e8 = 1,000, the client Initial Sequence Number (ISN).'},
+    {start:28,end:31,color:'ack',label:'TCP acknowledgment number',detail:'All zero here; ACK flag is not set in an initial SYN, so this value is not meaningful.'},
+    {start:32,end:33,color:'flag',label:'TCP data offset and flags',detail:'50 02: high nibble 5 indicates a 20-byte TCP header; the SYN bit is set.'},
+    {start:34,end:35,color:'other',label:'TCP window size',detail:'ff ff = 65,535 in this illustrative SYN (no window scaling).'},
+    {start:36,end:37,color:'other',label:'TCP checksum',detail:'dc c7: checksum over TCP pseudo-header and this TCP segment.'},
+    {start:38,end:39,color:'other',label:'TCP urgent pointer',detail:'00 00: unused in this segment.'}
+  ];
+  function fieldFor(i){return hexFields.find(f=>i>=f.start&&i<=f.end)||{start:i,end:i,color:'other',label:'Other IPv4 header field',detail:'This byte belongs to IPv4 header metadata, such as service class, identification, fragmentation, TTL, or header checksum.'};}
+  const grid=$('#hexGrid');
+  hex.forEach((h,i)=>{let b=document.createElement('button');b.type='button';b.className='hex-byte '+fieldFor(i).color;b.textContent=h;b.title='Byte '+i;b.setAttribute('aria-label','Byte '+i+': '+h);b.addEventListener('click',()=>selectHex(i));grid.appendChild(b)});
+  function selectHex(i){const f=fieldFor(i); $$('.hex-byte').forEach((n,j)=>n.classList.toggle('on',j>=f.start&&j<=f.end));$('#hexDetail').textContent=f.label+' — '+f.detail+' (absolute byte offsets '+f.start+'–'+f.end+')';}selectHex(32);
+  function recalcSegments(){let size=Math.max(1,Math.min(200000,Math.trunc(Number($('#payloadSize').value)||1)));let mtu=Number($('#mtuSize').value),mss=mtu-40;let count=Math.ceil(size/mss),last=size-(count-1)*mss;$('#segmentStats').innerHTML=`<div class="result"><b>${mss.toLocaleString()} B</b><span>Illustrative MSS</span></div><div class="result"><b>${count.toLocaleString()}</b><span>TCP segments</span></div><div class="result"><b>${last.toLocaleString()} B</b><span>Final payload</span></div>`;let bars=$('#segmentBars');bars.replaceChildren();let limit=Math.min(count,15);for(let i=0;i<limit;i++){let n=document.createElement('div');n.className='bar-item'+(i===count-1?' last':'');n.style.width=(Math.max(12,(i===count-1?last:mss)/mss*95))+'px';n.textContent=(i===count-1?last:mss).toLocaleString();bars.appendChild(n)}$('#segmentHint').textContent=`${count>15?'Showing the first 15 of '+count+' segments. ':''}Example assumes 20-byte IPv4 + 20-byte TCP headers, immediate full-MSS segmentation, and no extra encapsulation. Actual segment boundaries are not guaranteed.`;}
+  $('#payloadSize').addEventListener('input',recalcSegments);$('#mtuSize').addEventListener('change',recalcSegments);recalcSegments();
+  const orderStates=[
+    {b:'missing',c:'not arrived',ack:'1006',next:'1006',app:'HELLO',explain:'Segment A arrives with SEQ 1001 and 5 bytes. TCP can deliver HELLO. Its next expected byte is 1006.'},
+    {b:'missing',c:'AGAIN (buffered)',ack:'1006',next:'1006',app:'HELLO',explain:'Segment C (SEQ 1011) arrives before B. TCP may buffer AGAIN, but because bytes 1006–1010 are missing, the cumulative ACK stays at 1006.'},
+    {b:'WORLD',c:'AGAIN',ack:'1016',next:'1016',app:'HELLOWORLDAGAIN',explain:'Segment B fills the gap. The contiguous stream extends through byte 1015, and the ACK advances to 1016.'}
+  ];
+  function renderOrder(n){let s=orderStates[n];$('#ordA').textContent='HELLO';$('#ordB').textContent=s.b;$('#ordC').textContent=s.c;$('#ordAck').textContent=s.ack;$('#ordNext').textContent=s.next;$('#ordApp').textContent=s.app;$('#ordExplainer').textContent=s.explain;$$('[data-order]').forEach((b,i)=>b.classList.toggle('selected',i===n));}
+  $$('[data-order]').forEach((b,i)=>b.addEventListener('click',()=>renderOrder(i)));renderOrder(0);
+  function renderBuffer(){let used=Number($('#bufferSlider').value),free=64-used;$('#bufferUsedText').textContent=`${used} / 64 KiB`;$('#bufferFilled').style.width=(used/64*100)+'%';$('#bufferFree').textContent=free+' KiB';$('#bufferWindow').textContent=(free*1024).toLocaleString();$('#bufferState').textContent=free===0?'ZERO':free<=16?'LOW':'OPEN';$('#bufferExplain').textContent=free===0?'The receiver advertises zero available window; the sender stops ordinary new data beyond the allowed window and can probe later.':`The receive buffer has ${free} KiB free. Advertisements are subject to TCP window-management rules; this is a conceptual model.`;}
+  $('#bufferSlider').addEventListener('input',renderBuffer);renderBuffer();
+  const walks={l7:{middle:'L7 LB',middleDesc:'HTTP-aware proxy',tcp:'2',mapping:'HTTP exchange',back:'Bridged',detail:'Browser sends GET /events to the LB. The LB forwards the HTTP request over a separate upstream TCP connection, keeps its upstream-to-downstream HTTP exchange mapping, and relays the event-stream body incrementally. Each TCP leg has its own windows and sequence numbers.'},l4:{middle:'L4 LB',middleDesc:'Packet forwarding / NAT',tcp:'1',mapping:'TCP flow',back:'End-to-end',detail:'Browser sends a SYN to the service virtual IP. The L4 LB chooses a backend and forwards or translates the original TCP packets. The backend completes the TCP handshake. No HTTP or SSE parsing is needed at the LB. Client and backend are the TCP endpoints.'}};
+  function renderWalk(k){let s=walks[k];$('#walkMiddle').textContent=s.middle;$('#walkMidDescription').textContent=s.middleDesc;$('#walkTcp').textContent=s.tcp;$('#walkMapping').textContent=s.mapping;$('#walkBackpressure').textContent=s.back;$('#walkDetails').textContent=s.detail;$$('[data-arch]').forEach(b=>b.classList.toggle('selected',b.dataset.arch===k));}
+  $$('[data-arch]').forEach(b=>b.addEventListener('click',()=>renderWalk(b.dataset.arch)));renderWalk('l7');
+  const qs=[
+   {q:'A TCP header has SEQ 1001 and a 5-byte payload. What SEQ would the next contiguous data begin at?',a:['1002','1006','1005'],correct:1,why:'Sequence numbers count bytes, so the next position is 1001 + 5 = 1006.'},
+   {q:'The receiver gets A (1001–1005), then C (1011–1015). What cumulative ACK can it send?',a:['1016','1011','1006'],correct:2,why:'Bytes 1006–1010 are missing. The cumulative ACK stays at 1006.'},
+   {q:'What does an HTTP/1.1 keep-alive connection reuse?',a:['The existing TCP connection','Only the client IP address','The HTTP request body'],correct:0,why:'Multiple HTTP exchanges can be carried sequentially on the same established TCP byte stream.'},
+   {q:'Why is HTTP described as stateless despite using TCP?',a:['TCP does not maintain state','HTTP does not automatically maintain user-session context','HTTP requires reconnecting every request'],correct:1,why:'Transport state (SEQ, ACK, buffers) is separate from application state (identity, login, cart).'},
+   {q:'What is the primary role of the TCP Window Size header field?',a:['Tell the sender acceptable receive capacity','Report the size of the Ethernet frame','Identify the HTTP stream'],correct:0,why:'The advertised receive window implements receiver-side TCP flow control.'},
+   {q:'When an L7 proxy relays SSE, what mapping does it need?',a:['An HTTP downstream exchange to an upstream exchange','Every SSE event to an IP packet','One client thread to one CPU core'],correct:0,why:'The proxy links the HTTP exchanges; with HTTP/2 these may be independently multiplexed streams.'},
+   {q:'Does a NAT-based L4 packet-forwarding load balancer create a second TCP connection?',a:['Always','Only on packet loss','Not by forwarding/rewriting packets alone'],correct:2,why:'Packet forwarding does not make the LB a TCP endpoint. The original SYN reaches the backend.'},
+   {q:'What is the important difference between an AWS NLB TCP listener and TLS listener?',a:['Both necessarily parse HTTP','TLS listener terminates TLS and its TCP connection','TCP listener requires a new HTTP request for every byte'],correct:1,why:'AWS documents that NLB TLS termination also terminates TCP and establishes an upstream TCP connection.'}
+  ];
+  const answers=new Map();
+  function makeQuiz(){let area=$('#quizArea');area.replaceChildren();qs.forEach((q,i)=>{let el=document.createElement('div');el.className='quiz';let title=document.createElement('div');title.className='quiz-question';title.textContent=(i+1)+'. '+q.q;el.appendChild(title);let wrap=document.createElement('div');wrap.className='answers';q.a.forEach((opt,j)=>{let b=document.createElement('button');b.type='button';b.textContent=String.fromCharCode(65+j)+'. '+opt;b.onclick=()=>{answers.set(i,j);drawQuiz()};wrap.appendChild(b)});el.appendChild(wrap);let feed=document.createElement('div');feed.className='feedback';el.appendChild(feed);area.appendChild(el)});drawQuiz()}
+  function drawQuiz(){[...$('#quizArea').children].forEach((el,i)=>{let chosen=answers.get(i);el.querySelectorAll('button').forEach((b,j)=>{b.className='';if(chosen!==undefined){if(j===qs[i].correct)b.classList.add('right');else if(j===chosen)b.classList.add('wrong');}});el.querySelector('.feedback').textContent=chosen===undefined?'':(chosen===qs[i].correct?'Correct. ':'Not quite. ')+qs[i].why;});let count=answers.size,correct=[...answers].filter(([i,j])=>qs[i].correct===j).length;$('#quizScore').textContent=`${count} of ${qs.length} answered · ${correct} correct`;}
+  $('#resetQuiz').addEventListener('click',()=>{answers.clear();drawQuiz()});makeQuiz();
+  // Notes are local browser storage; errors ignored on file:// contexts that block storage.
+  $$('textarea[data-note]').forEach(t=>{let key='netnotes-v1-'+t.dataset.note;try{t.value=localStorage.getItem(key)||''}catch(e){}t.addEventListener('input',()=>{try{localStorage.setItem(key,t.value)}catch(e){}})});
+  $('#exportNotes').addEventListener('click',()=>{let lines=['Network Field Notes — personal notes',''];$$('textarea[data-note]').forEach(t=>{lines.push('## '+t.dataset.note, t.value||'(empty)','')});let file=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}),link=document.createElement('a');link.href=URL.createObjectURL(file);link.download='networking-study-notes.txt';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
+  // Chapter progress as document scroll progress. Sidebar highlights current section.
+  function scrollUpdate(){let doc=document.documentElement,den=Math.max(1,doc.scrollHeight-innerHeight),pct=Math.round(scrollY/den*100);$('#progressFill').style.width=pct+'%';$('#progressText').textContent=pct+'% scrolled';let secs=$$('.section');let active=secs[0];for(let s of secs)if(s.getBoundingClientRect().top<140)active=s;$$('.nav').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+active.id));}
+  window.addEventListener('scroll',scrollUpdate,{passive:true});scrollUpdate();
+})();
+</script>
+</body>
+</html>
