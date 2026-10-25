@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A visual study guide to CDNs, Nginx, HTTP caching, multi-region architecture, and request coalescing.">
+  <title>CDN, Nginx &amp; Caching — A Systems Study Guide</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --bg-soft: #0b1728;
+      --surface: rgba(17, 31, 51, .82);
+      --surface-2: #12233a;
+      --surface-3: #0a1423;
+      --text: #e8f0fb;
+      --muted: #9fb0c6;
+      --faint: #6f829a;
+      --border: rgba(159, 176, 198, .18);
+      --border-strong: rgba(159, 176, 198, .32);
+      --cyan: #49d6d0;
+      --cyan-soft: rgba(73, 214, 208, .12);
+      --blue: #67a7ff;
+      --blue-soft: rgba(103, 167, 255, .12);
+      --amber: #ffbd66;
+      --amber-soft: rgba(255, 189, 102, .12);
+      --green: #74d99f;
+      --green-soft: rgba(116, 217, 159, .12);
+      --red: #ff8795;
+      --red-soft: rgba(255, 135, 149, .12);
+      --purple: #b69cff;
+      --purple-soft: rgba(182, 156, 255, .12);
+      --code: #08111e;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .3);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --max: 1180px;
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f8fc;
+      --bg-soft: #edf3fa;
+      --surface: rgba(255, 255, 255, .9);
+      --surface-2: #f6f9fd;
+      --surface-3: #eef4fa;
+      --text: #142033;
+      --muted: #52657d;
+      --faint: #71839a;
+      --border: rgba(33, 56, 84, .14);
+      --border-strong: rgba(33, 56, 84, .25);
+      --cyan: #087f7c;
+      --cyan-soft: rgba(8, 127, 124, .09);
+      --blue: #296fc4;
+      --blue-soft: rgba(41, 111, 196, .09);
+      --amber: #a15d00;
+      --amber-soft: rgba(161, 93, 0, .09);
+      --green: #19784a;
+      --green-soft: rgba(25, 120, 74, .09);
+      --red: #b83849;
+      --red-soft: rgba(184, 56, 73, .09);
+      --purple: #7050bd;
+      --purple-soft: rgba(112, 80, 189, .09);
+      --code: #0d1929;
+      --shadow: 0 24px 70px rgba(44, 65, 90, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 12% -5%, rgba(73, 214, 208, .13), transparent 26rem),
+        radial-gradient(circle at 88% 5%, rgba(103, 167, 255, .12), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    button, input { font: inherit; }
+    ::selection { background: rgba(73, 214, 208, .26); }
+
+    .progress-line {
+      position: fixed;
+      inset: 0 auto auto 0;
+      z-index: 100;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      min-height: 64px;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-weight: 760;
+      letter-spacing: -.02em;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #041417;
+      background: linear-gradient(135deg, var(--cyan), #82ece7);
+      box-shadow: 0 0 0 4px var(--cyan-soft);
+      font-weight: 900;
+    }
+
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-button {
+      min-height: 38px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .icon-button:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+
+    .shell {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 42px;
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: 92px;
+      padding: 32px 0;
+      max-height: calc(100vh - 110px);
+      overflow: auto;
+    }
+    .toc-title {
+      margin: 0 0 10px 12px;
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .toc a {
+      display: block;
+      margin: 2px 0;
+      padding: 7px 12px;
+      border-radius: 9px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .toc a:hover, .toc a.active { color: var(--text); background: var(--cyan-soft); }
+    .toc a.active { box-shadow: inset 2px 0 var(--cyan); }
+
+    main { min-width: 0; padding-bottom: 100px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 78px 0 48px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -180px;
+      top: -160px;
+      border: 1px solid rgba(73, 214, 208, .18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 70px rgba(73, 214, 208, .025), 0 0 0 140px rgba(103, 167, 255, .025);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--cyan); }
+    h1, h2, h3 { line-height: 1.15; letter-spacing: -.035em; }
+    h1 {
+      max-width: 800px;
+      margin: 0;
+      font-size: clamp(42px, 7vw, 78px);
+      font-weight: 820;
+    }
+    .gradient-text {
+      background: linear-gradient(100deg, var(--cyan), var(--blue));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero-lede {
+      max-width: 760px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2.1vw, 21px);
+      line-height: 1.65;
+    }
+    .hero-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 38px;
+    }
+    .hero-chip {
+      min-height: 82px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(145deg, var(--surface), transparent);
+    }
+    .hero-chip strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .hero-chip span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    section { padding: 74px 0 0; }
+    .section-kicker {
+      margin: 0 0 9px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h2 { margin: 0 0 18px; font-size: clamp(31px, 4.5vw, 48px); }
+    h3 { margin: 34px 0 12px; font-size: 24px; }
+    p { margin: 0 0 17px; }
+    .section-intro { max-width: 800px; color: var(--muted); font-size: 17px; }
+    .accent { color: var(--cyan); }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+    code, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    :not(pre) > code {
+      padding: .15em .42em;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface-3);
+      color: var(--cyan);
+      font-size: .9em;
+    }
+
+    .callout {
+      margin: 28px 0;
+      padding: 20px 22px;
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      background: var(--cyan-soft);
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout p:last-child { margin-bottom: 0; }
+    .callout.warning { border-color: var(--amber); background: var(--amber-soft); }
+    .callout.purple { border-color: var(--purple); background: var(--purple-soft); }
+
+    .diagram {
+      margin: 30px 0;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(160deg, var(--surface), color-mix(in srgb, var(--surface-2) 80%, transparent));
+      box-shadow: var(--shadow);
+    }
+    .diagram-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .diagram-head strong { font-size: 15px; }
+    .diagram-head span { color: var(--muted); font-size: 12px; text-align: right; }
+    .diagram svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .diagram .node { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1.4; }
+    .diagram .node-cyan { fill: var(--cyan-soft); stroke: var(--cyan); stroke-width: 1.5; }
+    .diagram .node-blue { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.5; }
+    .diagram .node-amber { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.5; }
+    .diagram .node-green { fill: var(--green-soft); stroke: var(--green); stroke-width: 1.5; }
+    .diagram .node-purple { fill: var(--purple-soft); stroke: var(--purple); stroke-width: 1.5; }
+    .diagram text { fill: var(--text); font-family: inherit; }
+    .diagram .label { font-size: 13px; font-weight: 750; }
+    .diagram .sub { fill: var(--muted); font-size: 11px; }
+    .diagram .tiny { fill: var(--muted); font-size: 10px; }
+    .diagram .line { fill: none; stroke: var(--faint); stroke-width: 1.8; }
+    .diagram .line-cyan { fill: none; stroke: var(--cyan); stroke-width: 2; }
+    .diagram .line-amber { fill: none; stroke: var(--amber); stroke-width: 2; }
+    .diagram .line-green { fill: none; stroke: var(--green); stroke-width: 2; }
+    .diagram .dash { stroke-dasharray: 6 5; }
+
+    .grid-2, .grid-3 { display: grid; gap: 16px; margin: 24px 0; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 21px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+    }
+    .card h3, .card h4 { margin: 0 0 9px; letter-spacing: -.02em; }
+    .card h4 { font-size: 16px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card-number {
+      width: 31px;
+      height: 31px;
+      margin-bottom: 15px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--cyan-soft);
+      color: var(--cyan);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 25px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .compare-table-wrap { margin: 26px 0; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 660px; font-size: 14px; }
+    th, td { padding: 14px 15px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    tbody tr:hover { background: var(--surface); }
+    td:first-child { font-weight: 720; color: var(--text); }
+
+    .code-block {
+      margin: 24px 0;
+      overflow: hidden;
+      border: 1px solid rgba(162, 184, 211, .18);
+      border-radius: 14px;
+      background: var(--code);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, .18);
+    }
+    .code-head {
+      min-height: 42px;
+      padding: 8px 10px 8px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid rgba(162, 184, 211, .14);
+      color: #9fb0c6;
+      font-size: 12px;
+    }
+    .dots { display: inline-flex; gap: 6px; margin-right: 10px; }
+    .dots i { width: 8px; height: 8px; border-radius: 50%; background: #405169; }
+    .copy-button {
+      padding: 5px 9px;
+      border: 1px solid rgba(162, 184, 211, .18);
+      border-radius: 7px;
+      background: rgba(255,255,255,.04);
+      color: #bdcbe0;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .copy-button:hover { background: rgba(255,255,255,.08); }
+    pre { margin: 0; padding: 19px; overflow-x: auto; color: #d8e4f4; font-size: 13px; line-height: 1.65; tab-size: 4; }
+    pre code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .tok-c { color: #71849d; }
+    .tok-k { color: #c5a7ff; }
+    .tok-s { color: #8fe3b2; }
+    .tok-n { color: #76b7ff; }
+    .tok-a { color: #ffd08a; }
+
+    .lab {
+      margin: 28px 0;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, var(--surface), var(--surface-3));
+    }
+    .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .lab-top h3 { margin: 0; font-size: 20px; }
+    .status-pill { padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 850; letter-spacing: .07em; }
+    .status-pill.hit { color: var(--green); background: var(--green-soft); }
+    .status-pill.stale { color: var(--amber); background: var(--amber-soft); }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .control-row label { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; }
+    .control-row output { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; margin: 12px 0 0; accent-color: var(--cyan); cursor: pointer; }
+    .freshness-track { height: 10px; margin: 24px 0 14px; overflow: hidden; border-radius: 999px; background: var(--border); }
+    .freshness-fill { width: 33%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .25s ease, background .25s ease; }
+    .lab-result { padding: 16px 17px; border-radius: 11px; background: var(--surface-2); }
+    .lab-result strong { display: block; margin-bottom: 3px; }
+    .lab-result span { color: var(--muted); font-size: 13px; }
+
+    .formula {
+      margin: 24px 0;
+      padding: 19px 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-3);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      color: var(--cyan);
+      font-size: clamp(14px, 2vw, 18px);
+      text-align: center;
+    }
+
+    .timeline { margin: 26px 0; }
+    .timeline-item { position: relative; padding: 0 0 24px 42px; }
+    .timeline-item:not(:last-child)::before { content: ""; position: absolute; left: 14px; top: 27px; bottom: 0; width: 1px; background: var(--border-strong); }
+    .timeline-dot { position: absolute; left: 0; top: 0; width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: var(--cyan-soft); color: var(--cyan); font-weight: 800; font-size: 12px; }
+    .timeline-item h4 { margin: 2px 0 4px; }
+    .timeline-item p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .recap {
+      margin-top: 74px;
+      padding: 34px;
+      border: 1px solid rgba(73, 214, 208, .26);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, var(--cyan-soft), var(--blue-soft));
+    }
+    .recap h2 { margin-bottom: 22px; }
+    .recap-list { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 24px; }
+    .recap-item { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+    .recap-check { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: var(--cyan); background: var(--cyan-soft); font-weight: 900; }
+    footer { padding: 46px 0 10px; color: var(--faint); font-size: 12px; text-align: center; }
+
+    @media (max-width: 900px) {
+      .shell { display: block; width: min(100% - 36px, 820px); }
+      .toc { display: none; }
+      .hero { padding-top: 58px; }
+      .hero-strip { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .topbar-inner { padding-inline: 16px; }
+      .brand span:last-child { display: none; }
+      .hero { padding-top: 48px; }
+      .hero-strip, .grid-2, .grid-3, .control-grid, .recap-list { grid-template-columns: 1fr; }
+      .diagram { padding: 14px; margin-inline: -4px; }
+      .diagram-head { display: block; }
+      .diagram-head span { display: block; margin-top: 3px; text-align: left; }
+      section { padding-top: 60px; }
+      .recap { padding: 24px 20px; }
+      .theme-label { display: none; }
+    }
+    @media print {
+      :root, html[data-theme="light"], html[data-theme="dark"] { color-scheme: light; --bg: #fff; --surface: #fff; --surface-2: #f7f9fc; --surface-3: #f4f7fa; --text: #111827; --muted: #4b5563; --faint: #6b7280; --border: #d9e0e8; --border-strong: #bdc7d4; --shadow: none; }
+      body { background: #fff; }
+      .topbar, .toc, .progress-line, .copy-button { display: none !important; }
+      .shell { display: block; width: 100%; }
+      main { padding: 0 22px; }
+      .hero { padding-top: 28px; }
+      section { break-inside: avoid; }
+      .diagram, .card, .lab, .code-block { break-inside: avoid; box-shadow: none; }
+      .code-block { background: #0d1929; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-line" id="progressLine" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark">C</span><span>CDN Systems Study Guide</span></div>
+      <div class="top-actions">
+        <a class="icon-button" href="index.html"><span aria-hidden="true">←</span><span class="theme-label">Library</span></a>
+        <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle color theme"><span aria-hidden="true">◐</span><span class="theme-label">Theme</span></button>
+        <button class="icon-button" type="button" onclick="window.print()"><span aria-hidden="true">⇩</span><span>Print / PDF</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="toc" aria-label="Table of contents">
+      <p class="toc-title">Study path</p>
+      <a href="#mental-model">01 · Mental model</a>
+      <a href="#request-flow">02 · Request flow</a>
+      <a href="#nginx">03 · Nginx &amp; proxies</a>
+      <a href="#implementation">04 · CDN internals</a>
+      <a href="#freshness">05 · Cache freshness</a>
+      <a href="#multi-region">06 · CDN vs multi-region</a>
+      <a href="#coalescing">07 · Request coalescing</a>
+      <a href="#tradeoffs">08 · Tradeoffs</a>
+      <a href="#recap">09 · Recap</a>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <div class="eyebrow">Distributed systems, from the wire up</div>
+        <h1>CDN, Nginx &amp; <span class="gradient-text">Caching</span></h1>
+        <p class="hero-lede">A practical study guide to how globally distributed HTTP caches route traffic, decide freshness, protect origins, and stay operationally different from multi-region application deployments.</p>
+        <div class="hero-strip" aria-label="Core themes">
+          <div class="hero-chip"><strong>Route</strong><span>DNS and Anycast steer users to a nearby point of presence.</span></div>
+          <div class="hero-chip"><strong>Proxy</strong><span>The edge terminates HTTP/TLS and creates a separate upstream request.</span></div>
+          <div class="hero-chip"><strong>Cache</strong><span>Fresh responses are served locally; misses travel to the origin.</span></div>
+          <div class="hero-chip"><strong>Collapse</strong><span>Concurrent misses share work so the origin avoids a stampede.</span></div>
+        </div>
+      </header>
+
+      <section id="mental-model">
+        <p class="section-kicker">01 · Mental model</p>
+        <h2>Start with one sentence</h2>
+        <p class="section-intro">A CDN is a <strong class="accent">globally distributed, HTTP-aware reverse proxy with caching</strong>. It is not a new protocol and it is not merely a replicated application. It is a managed network of edge servers that can answer some requests without contacting your origin.</p>
+
+        <div class="callout">
+          <strong>The useful abstraction</strong>
+          <p>User → nearby edge → origin only when necessary. The edge can terminate TLS, inspect HTTP, apply policy, store responses, and open its own connection to the backend.</p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card"><span class="tag">CDN</span><h3>Global edge cache</h3><p class="muted">Optimizes delivery and absorbs repeat traffic near users.</p></article>
+          <article class="card"><span class="tag">Load balancer</span><h3>Backend distributor</h3><p class="muted">Spreads uncached work across application replicas.</p></article>
+          <article class="card"><span class="tag">Redis</span><h3>Application-side cache</h3><p class="muted">Stores data near application compute, usually inside a region.</p></article>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>A realistic layered architecture</strong><span>Each layer reduces a different kind of work</span></div>
+          <svg viewBox="0 0 860 250" role="img" aria-labelledby="archTitle archDesc">
+            <title id="archTitle">Layered CDN application architecture</title>
+            <desc id="archDesc">A user reaches a nearby CDN edge. Cache misses go to a load balancer, then application servers, Redis, and finally a database.</desc>
+            <defs>
+              <marker id="arrowA" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker>
+              <marker id="arrowACyan" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--cyan)"/></marker>
+            </defs>
+            <rect class="node" x="15" y="86" width="112" height="66" rx="13"/>
+            <text class="label" x="71" y="113" text-anchor="middle">User</text><text class="sub" x="71" y="133" text-anchor="middle">Tokyo</text>
+            <rect class="node-cyan" x="177" y="70" width="142" height="98" rx="14"/>
+            <text class="label" x="248" y="101" text-anchor="middle">CDN edge</text><text class="sub" x="248" y="122" text-anchor="middle">HTTP proxy + cache</text><text class="sub" x="248" y="143" text-anchor="middle">Tokyo PoP</text>
+            <rect class="node-blue" x="369" y="86" width="128" height="66" rx="13"/>
+            <text class="label" x="433" y="113" text-anchor="middle">Load balancer</text><text class="sub" x="433" y="133" text-anchor="middle">Origin region</text>
+            <rect class="node" x="547" y="24" width="118" height="55" rx="12"/>
+            <text class="label" x="606" y="48" text-anchor="middle">App A</text><text class="sub" x="606" y="66" text-anchor="middle">business logic</text>
+            <rect class="node" x="547" y="96" width="118" height="55" rx="12"/>
+            <text class="label" x="606" y="120" text-anchor="middle">App B</text><text class="sub" x="606" y="138" text-anchor="middle">business logic</text>
+            <rect class="node" x="547" y="168" width="118" height="55" rx="12"/>
+            <text class="label" x="606" y="192" text-anchor="middle">App C</text><text class="sub" x="606" y="210" text-anchor="middle">business logic</text>
+            <rect class="node-purple" x="714" y="48" width="128" height="64" rx="13"/>
+            <text class="label" x="778" y="75" text-anchor="middle">Redis</text><text class="sub" x="778" y="95" text-anchor="middle">shared data cache</text>
+            <rect class="node-amber" x="714" y="148" width="128" height="64" rx="13"/>
+            <text class="label" x="778" y="175" text-anchor="middle">Database</text><text class="sub" x="778" y="195" text-anchor="middle">source of truth</text>
+            <path class="line-cyan" d="M127 119 H177" marker-end="url(#arrowACyan)"/><text class="tiny" x="152" y="108" text-anchor="middle">fast</text>
+            <path class="line dash" d="M319 119 H369" marker-end="url(#arrowA)"/><text class="tiny" x="344" y="108" text-anchor="middle">miss</text>
+            <path class="line" d="M497 119 H524 V52 H547 M524 119 H547 M524 119 V196 H547" marker-end="url(#arrowA)"/>
+            <path class="line" d="M665 52 H690 V80 H714 M665 123 H690 V80 M665 196 H690 V180 H714" marker-end="url(#arrowA)"/>
+            <path class="line dash" d="M778 112 V148" marker-end="url(#arrowA)"/><text class="tiny" x="793" y="133">miss</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="request-flow">
+        <p class="section-kicker">02 · Request flow</p>
+        <h2>What happens to one request?</h2>
+        <p class="section-intro">Consider <code>GET https://cdn.example.com/images/cat.jpg</code>. The first request is usually expensive; the next one can be answered close to the user.</p>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>Miss, populate, then hit</strong><span>The edge is an active HTTP participant—not a packet forwarder</span></div>
+          <svg viewBox="0 0 860 430" role="img" aria-labelledby="flowTitle flowDesc">
+            <title id="flowTitle">CDN cache miss and cache hit sequence</title>
+            <desc id="flowDesc">The browser requests an image from an edge. On a miss, the edge fetches it from the origin, stores it, and returns it. The next request is served from the edge.</desc>
+            <defs><marker id="arrowB" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker><marker id="arrowBGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--green)"/></marker></defs>
+            <rect class="node" x="55" y="15" width="155" height="58" rx="12"/><text class="label" x="132" y="39" text-anchor="middle">Browser</text><text class="sub" x="132" y="58" text-anchor="middle">Tokyo user</text>
+            <rect class="node-cyan" x="352" y="15" width="155" height="58" rx="12"/><text class="label" x="429" y="39" text-anchor="middle">CDN edge</text><text class="sub" x="429" y="58" text-anchor="middle">Tokyo cache</text>
+            <rect class="node-amber" x="650" y="15" width="155" height="58" rx="12"/><text class="label" x="727" y="39" text-anchor="middle">Origin</text><text class="sub" x="727" y="58" text-anchor="middle">Virginia / S3 / app</text>
+            <path class="line dash" d="M132 73 V408 M429 73 V408 M727 73 V408"/>
+            <path class="line" d="M132 112 H429" marker-end="url(#arrowB)"/><text class="sub" x="280" y="103" text-anchor="middle">1 · GET /images/cat.jpg</text>
+            <rect class="node-amber" x="382" y="132" width="94" height="34" rx="17"/><text class="tiny" x="429" y="153" text-anchor="middle">MISS</text>
+            <path class="line-amber" d="M429 192 H727" marker-end="url(#arrowB)"/><text class="sub" x="578" y="183" text-anchor="middle">2 · Fetch upstream</text>
+            <path class="line-amber" d="M727 242 H429" marker-end="url(#arrowB)"/><text class="sub" x="578" y="233" text-anchor="middle">3 · 200 OK + body</text>
+            <rect class="node-green" x="368" y="260" width="122" height="38" rx="10"/><text class="tiny" x="429" y="283" text-anchor="middle">4 · STORE COPY</text>
+            <path class="line-green" d="M429 322 H132" marker-end="url(#arrowBGreen)"/><text class="sub" x="280" y="313" text-anchor="middle">5 · Return object</text>
+            <path class="line-green" d="M132 372 H429" marker-end="url(#arrowBGreen)"/><text class="sub" x="280" y="363" text-anchor="middle">6 · Next GET</text>
+            <rect class="node-green" x="382" y="389" width="94" height="34" rx="17"/><text class="tiny" x="429" y="410" text-anchor="middle">HIT</text>
+          </svg>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item"><span class="timeline-dot">1</span><h4>Route to an edge</h4><p>DNS may return a location-aware address; Anycast may advertise the same IP from many locations. Internet routing carries the user toward a suitable PoP.</p></div>
+          <div class="timeline-item"><span class="timeline-dot">2</span><h4>Terminate and parse HTTP</h4><p>The edge accepts the client TCP/TLS connection, reads the method, host, path, headers, and cookies, then computes a cache key.</p></div>
+          <div class="timeline-item"><span class="timeline-dot">3</span><h4>Look up local cache state</h4><p>If a matching response is fresh, the edge serves it. If absent or stale, policy decides whether to fetch, revalidate, serve stale, or bypass.</p></div>
+          <div class="timeline-item"><span class="timeline-dot">4</span><h4>Open a separate upstream connection</h4><p>On a miss, the proxy sends a corresponding HTTP request to the origin. This is a new connection; it is not rewriting the destination of the client’s packet stream.</p></div>
+        </div>
+      </section>
+
+      <section id="nginx">
+        <p class="section-kicker">03 · Nginx &amp; reverse proxies</p>
+        <h2>Nginx is software; “reverse proxy” is a role</h2>
+        <p class="section-intro">Nginx is a high-performance web server written in C. Depending on configuration, the same program can serve files, reverse-proxy HTTP, balance traffic, terminate TLS, rate-limit clients, and cache upstream responses.</p>
+
+        <div class="grid-3">
+          <article class="card"><div class="card-number">A</div><h3>Web server</h3><p class="muted">Browser → Nginx → files. It reads HTML, CSS, images, or downloads from the local filesystem.</p></article>
+          <article class="card"><div class="card-number">B</div><h3>Reverse proxy</h3><p class="muted">Browser → Nginx → Spring Boot. It forwards an HTTP request and relays the backend response.</p></article>
+          <article class="card"><div class="card-number">C</div><h3>Load balancer</h3><p class="muted">Browser → Nginx → one of many backends, selected by round-robin, least connections, hashing, or another policy.</p></article>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>One proxy, two transport connections</strong><span>Layer 7 proxying lets Nginx inspect and act on HTTP</span></div>
+          <svg viewBox="0 0 860 230" role="img" aria-labelledby="proxyTitle proxyDesc">
+            <title id="proxyTitle">Reverse proxy connection model</title><desc id="proxyDesc">The client has one TCP and TLS connection to Nginx. Nginx has a separate upstream TCP connection to the application.</desc>
+            <defs><marker id="arrowC" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker></defs>
+            <rect class="node" x="20" y="72" width="150" height="82" rx="14"/><text class="label" x="95" y="104" text-anchor="middle">Browser</text><text class="sub" x="95" y="127" text-anchor="middle">client connection</text>
+            <rect class="node-cyan" x="349" y="42" width="162" height="142" rx="16"/><text class="label" x="430" y="76" text-anchor="middle">Nginx</text><text class="sub" x="430" y="101" text-anchor="middle">TLS termination</text><text class="sub" x="430" y="124" text-anchor="middle">HTTP routing</text><text class="sub" x="430" y="147" text-anchor="middle">cache / balancing</text>
+            <rect class="node-blue" x="690" y="72" width="150" height="82" rx="14"/><text class="label" x="765" y="104" text-anchor="middle">Spring Boot</text><text class="sub" x="765" y="127" text-anchor="middle">business logic</text>
+            <path class="line" d="M170 104 H349" marker-end="url(#arrowC)"/><path class="line" d="M349 132 H170" marker-end="url(#arrowC)"/>
+            <text class="tiny" x="259" y="89" text-anchor="middle">TCP/TLS connection #1</text>
+            <path class="line" d="M511 104 H690" marker-end="url(#arrowC)"/><path class="line" d="M690 132 H511" marker-end="url(#arrowC)"/>
+            <text class="tiny" x="600" y="89" text-anchor="middle">TCP connection #2</text>
+            <text class="sub" x="430" y="216" text-anchor="middle">Nginx reads one HTTP message and produces another upstream message.</text>
+          </svg>
+        </div>
+
+        <div class="compare-table-wrap">
+          <table>
+            <thead><tr><th>Concept</th><th>What it is</th><th>Typical responsibility</th></tr></thead>
+            <tbody>
+              <tr><td>HTTP</td><td>Application protocol</td><td>Defines requests, responses, methods, status codes, and headers.</td></tr>
+              <tr><td>Reverse proxy</td><td>Architectural role</td><td>Accepts client requests and makes upstream requests on their behalf.</td></tr>
+              <tr><td>Nginx</td><td>Concrete program</td><td>Can act as a web server, Layer 7 proxy, Layer 4 proxy, load balancer, and cache.</td></tr>
+              <tr><td>Spring Boot</td><td>Application framework</td><td>Runs business logic and APIs; proxying is not its primary purpose.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span><span class="dots"><i></i><i></i><i></i></span>nginx.conf · routing by path</span><button class="copy-button" type="button">Copy</button></div>
+          <pre><code><span class="tok-k">server</span> {
+    <span class="tok-a">listen</span> 443 ssl;
+    <span class="tok-a">server_name</span> example.com;
+
+    <span class="tok-k">location</span> /api/ {
+        <span class="tok-a">proxy_pass</span> http://spring_boot:8080;
+        <span class="tok-a">proxy_set_header</span> Host $host;
+        <span class="tok-a">proxy_set_header</span> X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    <span class="tok-k">location</span> /images/ {
+        <span class="tok-a">root</span> /var/www;
+    }
+}</code></pre>
+        </div>
+
+        <div class="callout purple">
+          <strong>Why Nginx scales well</strong>
+          <p>A master process manages configuration and worker lifecycles. Worker processes use event-driven, non-blocking I/O (for example, Linux <code>epoll</code>) so they can manage many concurrent connections without dedicating one operating-system thread to each socket.</p>
+        </div>
+
+        <div class="callout">
+          <strong>Layer 7 versus Layer 4</strong>
+          <p>As an HTTP reverse proxy, Nginx works at Layer 7: it can route using paths, headers, cookies, and methods. Its <code>stream</code> module can also proxy TCP or UDP at Layer 4, where it handles connections without needing to understand HTTP messages.</p>
+        </div>
+      </section>
+
+      <section id="implementation">
+        <p class="section-kicker">04 · CDN implementation</p>
+        <h2>A cache server is necessary, but not sufficient</h2>
+        <p class="section-intro">One Nginx instance with <code>proxy_cache</code> is a caching reverse proxy. A global CDN adds routing, fleets of cache servers, failure handling, observability, configuration distribution, certificate management, and invalidation.</p>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>Inside one edge, around every edge</strong><span>Data plane serves traffic; control plane tells the fleet how</span></div>
+          <svg viewBox="0 0 860 430" role="img" aria-labelledby="planeTitle planeDesc">
+            <title id="planeTitle">CDN data plane and control plane</title><desc id="planeDesc">The control plane distributes certificates, cache rules, routes, and purge messages to global edge locations. Each edge runs HTTP proxying, cache lookup, storage, and origin fetching in the data plane.</desc>
+            <defs><marker id="arrowD" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker></defs>
+            <rect class="node-purple" x="190" y="15" width="480" height="74" rx="15"/>
+            <text class="label" x="430" y="43" text-anchor="middle">Control plane</text><text class="sub" x="430" y="66" text-anchor="middle">TLS certificates · cache rules · origins · routing policy · purges · fleet config</text>
+            <path class="line dash" d="M290 89 V125 M430 89 V125 M570 89 V125"/>
+            <rect class="node-cyan" x="30" y="125" width="240" height="245" rx="17"/>
+            <text class="label" x="150" y="153" text-anchor="middle">Tokyo edge</text>
+            <rect class="node" x="62" y="174" width="176" height="42" rx="10"/><text class="sub" x="150" y="200" text-anchor="middle">HTTP/TLS reverse proxy</text>
+            <rect class="node" x="62" y="232" width="176" height="42" rx="10"/><text class="sub" x="150" y="258" text-anchor="middle">Cache key + policy</text>
+            <rect class="node-green" x="48" y="291" width="92" height="52" rx="10"/><text class="tiny" x="94" y="313" text-anchor="middle">RAM metadata</text><text class="tiny" x="94" y="330" text-anchor="middle">+ hot objects</text>
+            <rect class="node-blue" x="160" y="291" width="92" height="52" rx="10"/><text class="tiny" x="206" y="313" text-anchor="middle">SSD / disk</text><text class="tiny" x="206" y="330" text-anchor="middle">object bodies</text>
+            <rect class="node" x="310" y="125" width="240" height="245" rx="17"/>
+            <text class="label" x="430" y="153" text-anchor="middle">London edge</text>
+            <text class="sub" x="430" y="204" text-anchor="middle">Same data-plane roles</text>
+            <text class="sub" x="430" y="230" text-anchor="middle">Independent local freshness</text>
+            <text class="sub" x="430" y="256" text-anchor="middle">Independent eviction pressure</text>
+            <text class="sub" x="430" y="282" text-anchor="middle">Local failure domain</text>
+            <rect class="node" x="590" y="125" width="240" height="245" rx="17"/>
+            <text class="label" x="710" y="153" text-anchor="middle">US edge</text>
+            <rect class="node-amber" x="622" y="192" width="176" height="68" rx="11"/><text class="sub" x="710" y="220" text-anchor="middle">Origin fetcher</text><text class="tiny" x="710" y="241" text-anchor="middle">miss / revalidate / bypass</text>
+            <rect class="node" x="622" y="291" width="176" height="52" rx="11"/><text class="sub" x="710" y="322" text-anchor="middle">Local load balancing</text>
+            <path class="line" d="M270 390 H590" marker-end="url(#arrowD)"/><text class="tiny" x="430" y="414" text-anchor="middle">cache misses flow toward regional shield or origin</text>
+          </svg>
+        </div>
+
+        <div class="grid-2">
+          <article class="card"><h3>Data plane</h3><p class="muted">The hot path: accept connections, terminate TLS, parse HTTP, compute keys, read/write cache storage, fetch from origins, and return bytes.</p></article>
+          <article class="card"><h3>Control plane</h3><p class="muted">The management path: configure zones and origins, distribute certificates, push rules, issue purges, monitor health, and roll out software safely.</p></article>
+        </div>
+        <p class="muted">The proxy/cache engine may be Nginx, Varnish, Apache Traffic Server, a Pingora-based stack, or custom software. The product is the complete distributed system around that engine—not the engine alone.</p>
+
+        <h3>How users reach the right edge</h3>
+        <div class="grid-2">
+          <article class="card"><span class="tag">DNS routing</span><h3>Different answers</h3><p class="muted">The authoritative DNS service can return different edge addresses based on resolver location, network, health, load, and policy. DNS caching means decisions persist for the record’s TTL.</p></article>
+          <article class="card"><span class="tag">Anycast</span><h3>Same address, many places</h3><p class="muted">Many PoPs announce the same IP prefix through BGP. Internet routing selects a reachable path—often nearby in network terms, though not guaranteed geographically closest.</p></article>
+        </div>
+        <p class="muted small">After a request reaches a PoP, a local Layer 4 load balancer can distribute connections across the physical proxy/cache servers in that site.</p>
+
+        <div class="code-block">
+          <div class="code-head"><span><span class="dots"><i></i><i></i><i></i></span>nginx.conf · a compact caching edge</span><button class="copy-button" type="button">Copy</button></div>
+          <pre><code><span class="tok-k">proxy_cache_path</span> /var/cache/nginx
+    levels=1:2
+    keys_zone=edge_cache:100m
+    max_size=10g
+    inactive=60m
+    use_temp_path=off;
+
+<span class="tok-k">upstream</span> origin {
+    <span class="tok-a">server</span> app:8080;
+    <span class="tok-a">keepalive</span> 64;
+}
+
+<span class="tok-k">server</span> {
+    <span class="tok-a">listen</span> 80;
+
+    <span class="tok-k">location</span> /assets/ {
+        <span class="tok-a">proxy_pass</span> http://origin;
+        <span class="tok-a">proxy_cache</span> edge_cache;
+        <span class="tok-a">proxy_cache_key</span> <span class="tok-s">"$scheme$request_method$host$request_uri"</span>;
+        <span class="tok-a">proxy_cache_methods</span> GET HEAD;
+        <span class="tok-a">proxy_cache_valid</span> 200 301 302 10m;
+        <span class="tok-a">proxy_cache_valid</span> 404 1m;
+
+        <span class="tok-c"># Stampede protection and resilience</span>
+        <span class="tok-a">proxy_cache_lock</span> on;
+        <span class="tok-a">proxy_cache_lock_timeout</span> 5s;
+        <span class="tok-a">proxy_cache_lock_age</span> 5s;
+        <span class="tok-a">proxy_cache_background_update</span> on;
+        <span class="tok-a">proxy_cache_use_stale</span> updating error timeout http_500 http_502 http_503 http_504;
+
+        <span class="tok-c"># Do not share authenticated responses</span>
+        <span class="tok-a">proxy_cache_bypass</span> $http_authorization;
+        <span class="tok-a">proxy_no_cache</span> $http_authorization;
+
+        <span class="tok-a">add_header</span> X-Cache-Status $upstream_cache_status always;
+    }
+}</code></pre>
+        </div>
+        <p class="muted small">Production policy must also account for cookies, <code>Vary</code>, authorization, private data, purge mechanisms, object-size limits, observability, HTTPS, and origin-provided cache headers.</p>
+      </section>
+
+      <section id="freshness">
+        <p class="section-kicker">05 · HTTP caching &amp; freshness</p>
+        <h2>A cached object is not automatically usable</h2>
+        <p class="section-intro">The edge stores a response body plus metadata: cache key, headers, insertion time, freshness lifetime, validators, and policy state. On every request it asks, “Do I have a matching response, and may I reuse it now?”</p>
+
+        <div class="formula">fresh ⇔ current_age &lt; freshness_lifetime</div>
+
+        <div class="lab" aria-labelledby="labTitle">
+          <div class="lab-top"><h3 id="labTitle">Freshness lab</h3><span class="status-pill hit" id="cacheStatus">CACHE HIT</span></div>
+          <div class="control-grid">
+            <div class="control-row"><label for="ttlRange"><span>Freshness lifetime (TTL)</span><output id="ttlOut">60s</output></label><input id="ttlRange" type="range" min="10" max="180" step="10" value="60"></div>
+            <div class="control-row"><label for="ageRange"><span>Current object age</span><output id="ageOut">20s</output></label><input id="ageRange" type="range" min="0" max="240" step="5" value="20"></div>
+          </div>
+          <div class="freshness-track" aria-hidden="true"><div class="freshness-fill" id="freshnessFill"></div></div>
+          <div class="lab-result" aria-live="polite"><strong id="labHeadline">Serve directly from the edge</strong><span id="labDetail">The object remains fresh for 40 seconds. The origin is not contacted.</span></div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span><span class="dots"><i></i><i></i><i></i></span>HTTP · cacheable response and later revalidation</span><button class="copy-button" type="button">Copy</button></div>
+          <pre><code><span class="tok-c"># Origin response</span>
+HTTP/1.1 200 OK
+Content-Type: image/jpeg
+Cache-Control: public, max-age=3600, stale-while-revalidate=60
+ETag: "cat-v7-a81c"
+
+<span class="tok-c"># After freshness expires, edge asks whether its copy changed</span>
+GET /images/cat.jpg HTTP/1.1
+Host: origin.example.com
+If-None-Match: "cat-v7-a81c"
+
+<span class="tok-c"># No new body needed</span>
+HTTP/1.1 304 Not Modified</code></pre>
+        </div>
+
+        <div class="grid-2">
+          <article class="card"><h3>Fresh hit</h3><p class="muted">Return the stored response immediately and typically increase the downstream <code>Age</code> value.</p></article>
+          <article class="card"><h3>Stale + validator</h3><p class="muted">Send <code>If-None-Match</code> or <code>If-Modified-Since</code>. A <code>304</code> refreshes metadata without retransmitting the body.</p></article>
+          <article class="card"><h3>Stale without validator</h3><p class="muted">Fetch a new representation. The edge may temporarily serve stale if policy permits.</p></article>
+          <article class="card"><h3>Bypass / uncacheable</h3><p class="muted">Forward to origin when requests are personalized, unsafe to share, explicitly private, or disallowed by policy.</p></article>
+        </div>
+
+        <h3>Consistency is intentionally relaxed</h3>
+        <p>Each edge has independent cache state. Updating the origin does not instantly update every copy. Common strategies are:</p>
+        <div class="grid-3">
+          <article class="card"><div class="card-number">1</div><h3>Short TTL</h3><p class="muted">Bound staleness by letting old objects expire soon. More origin traffic, simpler operations.</p></article>
+          <article class="card"><div class="card-number">2</div><h3>Purge / invalidate</h3><p class="muted">Send a control-plane instruction to discard or revalidate keys. Fast, but distributed propagation is not perfectly instantaneous.</p></article>
+          <article class="card"><div class="card-number">3</div><h3>Versioned URL</h3><p class="muted">Publish <code>cat.v8.jpg</code> or a content hash. New content gets a new key, allowing long immutable TTLs.</p></article>
+        </div>
+        <div class="callout warning"><strong>Best default for static assets</strong><p>Use fingerprinted filenames plus a long <code>Cache-Control: public, max-age=31536000, immutable</code>. Change the URL when the bytes change.</p></div>
+      </section>
+
+      <section id="multi-region">
+        <p class="section-kicker">06 · CDN vs multi-region</p>
+        <h2>Replicate content—or replicate the application?</h2>
+        <p class="section-intro">A CDN is often cheaper, but cost is not the deepest distinction. The CDN replicates reusable HTTP responses on demand. Multi-region architecture replicates compute and often requires a deliberate data strategy.</p>
+
+        <div class="grid-3">
+          <article class="card"><span class="tag">Example</span><h3>1 TB delivered</h3><p class="muted">A 1 MB object requested one million times produces roughly 1 TB of user-facing delivery.</p></article>
+          <article class="card"><span class="tag">95% hit ratio</span><h3>≈ 50 GB from origin</h3><p class="muted">Only the miss traffic crosses from the origin to the CDN, reducing backend egress and request load.</p></article>
+          <article class="card"><span class="tag">Important</span><h3>Still 1 TB overall</h3><p class="muted">The CDN still sends the full terabyte to users. Savings come from managed edge capacity, less origin work, and avoiding full app stacks everywhere.</p></article>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>Two valid architectures</strong><span>The right answer depends on where business logic and mutable state must run</span></div>
+          <svg viewBox="0 0 860 390" role="img" aria-labelledby="regionTitle regionDesc">
+            <title id="regionTitle">Multi-region application compared with global CDN</title><desc id="regionDesc">The first architecture deploys applications and databases in Tokyo, London, and Virginia. The second uses CDN caches in each location with one application origin in Virginia.</desc>
+            <text class="label" x="20" y="28">A · Multi-region application</text>
+            <g transform="translate(18 48)">
+              <rect class="node-blue" x="0" y="0" width="250" height="112" rx="15"/><text class="label" x="125" y="28" text-anchor="middle">Tokyo</text><text class="sub" x="125" y="54" text-anchor="middle">App replicas + regional cache</text><text class="sub" x="125" y="78" text-anchor="middle">Database strategy required</text><text class="tiny" x="125" y="99" text-anchor="middle">local reads and writes</text>
+              <rect class="node-blue" x="287" y="0" width="250" height="112" rx="15"/><text class="label" x="412" y="28" text-anchor="middle">London</text><text class="sub" x="412" y="54" text-anchor="middle">App replicas + regional cache</text><text class="sub" x="412" y="78" text-anchor="middle">Database strategy required</text><text class="tiny" x="412" y="99" text-anchor="middle">local reads and writes</text>
+              <rect class="node-blue" x="574" y="0" width="250" height="112" rx="15"/><text class="label" x="699" y="28" text-anchor="middle">Virginia</text><text class="sub" x="699" y="54" text-anchor="middle">App replicas + regional cache</text><text class="sub" x="699" y="78" text-anchor="middle">Database strategy required</text><text class="tiny" x="699" y="99" text-anchor="middle">local reads and writes</text>
+            </g>
+            <line x1="20" y1="195" x2="840" y2="195" stroke="var(--border-strong)"/>
+            <text class="label" x="20" y="228">B · One origin region + global CDN</text>
+            <rect class="node-cyan" x="18" y="250" width="190" height="80" rx="14"/><text class="label" x="113" y="279" text-anchor="middle">Tokyo edge</text><text class="sub" x="113" y="305" text-anchor="middle">cached HTTP responses</text>
+            <rect class="node-cyan" x="250" y="250" width="190" height="80" rx="14"/><text class="label" x="345" y="279" text-anchor="middle">London edge</text><text class="sub" x="345" y="305" text-anchor="middle">cached HTTP responses</text>
+            <rect class="node-cyan" x="482" y="250" width="190" height="80" rx="14"/><text class="label" x="577" y="279" text-anchor="middle">Virginia edge</text><text class="sub" x="577" y="305" text-anchor="middle">cached HTTP responses</text>
+            <rect class="node-amber" x="714" y="242" width="128" height="96" rx="14"/><text class="label" x="778" y="270" text-anchor="middle">Origin</text><text class="sub" x="778" y="294" text-anchor="middle">App + DB</text><text class="tiny" x="778" y="317" text-anchor="middle">dynamic work</text>
+            <path class="line dash" d="M208 290 H230 M440 290 H462 M672 290 H714"/>
+            <text class="tiny" x="430" y="372" text-anchor="middle">Edges replicate cacheable output; they do not need your full application or database.</text>
+          </svg>
+        </div>
+
+        <div class="compare-table-wrap">
+          <table>
+            <thead><tr><th>Dimension</th><th>Global CDN</th><th>Multi-region application</th></tr></thead>
+            <tbody>
+              <tr><td>What is replicated</td><td>Cacheable HTTP responses, usually on demand.</td><td>Application compute, services, caches, queues, and often data.</td></tr>
+              <tr><td>Best for</td><td>Static assets, video, downloads, public or semi-public APIs, origin protection.</td><td>Dynamic low-latency operations, regional writes, data residency, stronger regional failover.</td></tr>
+              <tr><td>Data consistency</td><td>Per-edge TTL, revalidation, invalidation, versioning.</td><td>Database replication, conflict handling, ownership, quorum, failover.</td></tr>
+              <tr><td>Operational burden</td><td>Mostly delegated to the provider.</td><td>You operate application and data lifecycles in each region.</td></tr>
+              <tr><td>Cost shape</td><td>Transfer and request pricing; reduced origin egress and compute.</td><td>Baseline capacity, networking, observability, and duplicated services in every region.</td></tr>
+              <tr><td>Cache miss latency</td><td>Still pays the trip to the origin.</td><td>Can run logic locally if its dependencies are local too.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout"><strong>They are complements, not enemies</strong><p>Large systems often use both: a CDN for globally cacheable delivery and multi-region applications for dynamic, latency-sensitive, or residency-constrained operations.</p></div>
+      </section>
+
+      <section id="coalescing">
+        <p class="section-kicker">07 · Request coalescing</p>
+        <h2>Deduplicate work that is happening now</h2>
+        <p class="section-intro">Caching answers “Have we computed this before?” Request coalescing—also called <em>request collapsing</em> or <em>singleflight</em>—answers “Is someone already computing this key right now?” They solve different parts of the same stampede problem.</p>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>Many waiters, one leader</strong><span>Every caller receives the same eventual result</span></div>
+          <svg viewBox="0 0 860 330" role="img" aria-labelledby="singleTitle singleDesc">
+            <title id="singleTitle">Request coalescing with an in-flight map</title><desc id="singleDesc">Four requests for the same product converge on one shared future. One leader queries the database and completes the future, which releases every waiting request.</desc>
+            <defs><marker id="arrowE" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker><marker id="arrowEAmber" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--amber)"/></marker></defs>
+            <g>
+              <rect class="node" x="18" y="30" width="145" height="48" rx="11"/><text class="sub" x="90" y="59" text-anchor="middle">Request A · product:123</text>
+              <rect class="node" x="18" y="94" width="145" height="48" rx="11"/><text class="sub" x="90" y="123" text-anchor="middle">Request B · product:123</text>
+              <rect class="node" x="18" y="158" width="145" height="48" rx="11"/><text class="sub" x="90" y="187" text-anchor="middle">Request C · product:123</text>
+              <rect class="node" x="18" y="222" width="145" height="48" rx="11"/><text class="sub" x="90" y="251" text-anchor="middle">Request D · product:123</text>
+            </g>
+            <rect class="node-cyan" x="300" y="80" width="236" height="140" rx="16"/>
+            <text class="label" x="418" y="112" text-anchor="middle">In-flight map</text><text class="sub" x="418" y="142" text-anchor="middle">key: product:123</text>
+            <rect class="node-purple" x="337" y="161" width="162" height="40" rx="10"/><text class="tiny" x="418" y="185" text-anchor="middle">shared CompletableFuture</text>
+            <path class="line" d="M163 54 H250 V122 H300 M163 118 H300 M163 182 H300 M163 246 H250 V182 H300" marker-end="url(#arrowE)"/>
+            <rect class="node-amber" x="670" y="91" width="168" height="86" rx="15"/>
+            <text class="label" x="754" y="123" text-anchor="middle">Database</text><text class="sub" x="754" y="148" text-anchor="middle">one query</text>
+            <path class="line-amber" d="M536 130 H670" marker-end="url(#arrowEAmber)"/><text class="tiny" x="603" y="118" text-anchor="middle">leader only</text>
+            <path class="line-green" d="M754 177 V284 H418 V220" marker-end="url(#arrowE)"/><text class="tiny" x="621" y="304" text-anchor="middle">complete once → wake all followers</text>
+          </svg>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span><span class="dots"><i></i><i></i><i></i></span>Java · local singleflight with CompletableFuture</span><button class="copy-button" type="button">Copy</button></div>
+          <pre><code><span class="tok-k">final class</span> ProductLoader {
+    <span class="tok-k">private final</span> ConcurrentMap&lt;String, CompletableFuture&lt;Product&gt;&gt; inFlight =
+        <span class="tok-k">new</span> ConcurrentHashMap&lt;&gt;();
+
+    CompletionStage&lt;Product&gt; getProduct(String id) {
+        Product cached = cache.getIfPresent(id);
+        <span class="tok-k">if</span> (cached != <span class="tok-k">null</span>) {
+            <span class="tok-k">return</span> CompletableFuture.completedFuture(cached);
+        }
+
+        CompletableFuture&lt;Product&gt; mine = <span class="tok-k">new</span> CompletableFuture&lt;&gt;();
+        CompletableFuture&lt;Product&gt; existing = inFlight.putIfAbsent(id, mine);
+
+        <span class="tok-k">if</span> (existing != <span class="tok-k">null</span>) {
+            <span class="tok-k">return</span> existing;                    <span class="tok-c">// follower</span>
+        }
+
+        <span class="tok-c">// This caller is the leader. Recheck after winning the race.</span>
+        Product secondCheck = cache.getIfPresent(id);
+        <span class="tok-k">if</span> (secondCheck != <span class="tok-k">null</span>) {
+            mine.complete(secondCheck);
+        } <span class="tok-k">else</span> {
+            database.findAsync(id).whenComplete((product, error) -&gt; {
+                <span class="tok-k">if</span> (error != <span class="tok-k">null</span>) {
+                    mine.completeExceptionally(error);
+                } <span class="tok-k">else</span> {
+                    cache.put(id, product);
+                    mine.complete(product);
+                }
+            });
+        }
+
+        mine.orTimeout(2, TimeUnit.SECONDS)
+            .whenComplete((value, error) -&gt; inFlight.remove(id, mine));
+        <span class="tok-k">return</span> mine;
+    }
+}</code></pre>
+        </div>
+
+        <div class="grid-2">
+          <article class="card"><h3>Why <code>putIfAbsent</code> matters</h3><p class="muted">It is atomic. Exactly one caller installs its future for a key and becomes leader. Every concurrent follower observes the installed future.</p></article>
+          <article class="card"><h3>No thread per waiter required</h3><p class="muted">With asynchronous I/O, waiting requests register callbacks and release execution threads. The server still retains request and continuation state.</p></article>
+          <article class="card"><h3>Cleanup must be unconditional</h3><p class="muted">Remove the map entry on success, error, and timeout. Otherwise one failed future can poison that key or leak memory.</p></article>
+          <article class="card"><h3>Bound the blast radius</h3><p class="muted">Use deadlines, waiter limits, bounded key cardinality, backpressure, metrics, and policies for whether failures should be shared.</p></article>
+        </div>
+
+        <h3>Does this make the application stateful?</h3>
+        <p>It introduces <strong>ephemeral coordination state</strong>, but the service can still be stateless in the deployment sense. Losing the map may fail or duplicate in-flight work, but it does not lose durable business data or require a user to return to the same instance.</p>
+        <div class="compare-table-wrap">
+          <table>
+            <thead><tr><th>Property</th><th>In-flight future map</th><th>Persistent application state</th></tr></thead>
+            <tbody>
+              <tr><td>Example</td><td><code>product:123 → CompletableFuture</code></td><td>Shopping cart, session, order, account balance</td></tr>
+              <tr><td>Lifetime</td><td>Milliseconds or seconds</td><td>Minutes to years</td></tr>
+              <tr><td>If instance crashes</td><td>Requests fail/retry; work may be duplicated</td><td>Business data is lost if it lived only there</td></tr>
+              <tr><td>Sticky routing required</td><td>No</td><td>Potentially, unless state is externalized</td></tr>
+              <tr><td>Scale-out meaning</td><td>Each instance coordinates only its own callers</td><td>Instances need shared durable storage or ownership rules</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          <strong>The multi-instance limit</strong>
+          <p>Ten application instances mean up to ten leaders for the same key—one per in-memory map. Global coalescing needs shared coordination, key-affinity routing, or a caching service that collapses misses. That complexity is often unnecessary: reducing 10,000 queries to 10 may already be enough.</p>
+        </div>
+
+        <h3>Nginx does this at the cache layer</h3>
+        <p>With <code>proxy_cache_lock on;</code>, one request populates a missing cache key while others wait. <code>proxy_cache_lock_timeout</code> limits waiting; <code>proxy_cache_lock_age</code> allows another upstream request when the leader appears stuck. Therefore, “one origin request” is a protection goal—not an unconditional exactly-once guarantee.</p>
+      </section>
+
+      <section id="tradeoffs">
+        <p class="section-kicker">08 · Tradeoffs &amp; failure modes</p>
+        <h2>Fast paths create new responsibilities</h2>
+        <div class="grid-2">
+          <article class="card"><h3>Personalization leaks</h3><p class="muted">A bad cache key can serve one user’s data to another. Include every representation-changing dimension or bypass shared caching.</p></article>
+          <article class="card"><h3>Cache cardinality explosion</h3><p class="muted">Cookies, query parameters, device variants, and language headers can fragment the key space and destroy hit ratio.</p></article>
+          <article class="card"><h3>Stampede after expiry</h3><p class="muted">Popular keys can expire simultaneously. Use coalescing, jittered TTLs, stale-while-revalidate, warming, or a cache shield.</p></article>
+          <article class="card"><h3>Head-of-line dependency</h3><p class="muted">All coalesced callers inherit the leader’s latency and error. A single slow fetch delays the entire waiter group.</p></article>
+          <article class="card"><h3>Completion burst</h3><p class="muted">One future finishing can wake thousands of responses at once. The database was protected, but CPU, sockets, and egress still see the burst.</p></article>
+          <article class="card"><h3>Stale correctness</h3><p class="muted">Serving stale can improve availability, but it is unsafe for some data. Apply it per resource, not as a blanket reliability switch.</p></article>
+        </div>
+
+        <h3>What is actually cacheable?</h3>
+        <div class="compare-table-wrap">
+          <table>
+            <thead><tr><th>Content</th><th>Typical CDN behavior</th><th>Key concern</th></tr></thead>
+            <tbody>
+              <tr><td>Images, CSS, JavaScript</td><td>Cache aggressively, preferably with versioned URLs.</td><td>Deploy new URLs when bytes change.</td></tr>
+              <tr><td>Video and large downloads</td><td>Cache, often supporting byte-range or segmented delivery.</td><td>Storage pressure and origin fill efficiency.</td></tr>
+              <tr><td>Product catalog API</td><td>Cache if responses are shared and short staleness is acceptable.</td><td>Query normalization, locale, currency, and invalidation.</td></tr>
+              <tr><td>User profile or cart</td><td>Usually bypass shared cache; private browser caching may still apply.</td><td>Authorization and cross-user data exposure.</td></tr>
+              <tr><td>Real-time mutation</td><td>Proxy without caching.</td><td>Low-latency routing and origin capacity still matter.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout purple"><strong>A CDN helps even when it does not cache</strong><p>It can still provide TLS termination, DDoS absorption, WAF policy, connection reuse, protocol optimization, global ingress, and edge compute. But it does not magically make a 500 ms uncacheable database operation compute faster.</p></div>
+      </section>
+
+      <section class="recap" id="recap">
+        <p class="section-kicker">09 · Keep this mental model</p>
+        <h2>Concise recap</h2>
+        <div class="recap-list">
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>CDN:</strong> a global fleet of HTTP-aware reverse proxies and caches.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Nginx:</strong> concrete software that can serve, proxy, balance, and cache.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Routing:</strong> DNS and/or Anycast gets traffic to an edge; local balancing picks a server.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Freshness:</strong> headers and policy determine whether a stored response may be reused.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Control plane:</strong> distributes configuration; the data plane serves actual requests.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Multi-region:</strong> replicates compute and data strategy—not just HTTP output.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Singleflight:</strong> one in-flight future per key deduplicates concurrent work.</span></div>
+          <div class="recap-item"><span class="recap-check">✓</span><span><strong>Statelessness:</strong> temporary coordination state does not equal durable instance affinity.</span></div>
+        </div>
+      </section>
+
+      <footer>Self-contained study page · No external scripts, fonts, or network requests</footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.getElementById('themeToggle');
+      try {
+        const saved = localStorage.getItem('cdn-study-theme');
+        if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
+      } catch (_) {}
+
+      themeButton.addEventListener('click', () => {
+        root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        try { localStorage.setItem('cdn-study-theme', root.dataset.theme); } catch (_) {}
+      });
+
+      const ttl = document.getElementById('ttlRange');
+      const age = document.getElementById('ageRange');
+      const ttlOut = document.getElementById('ttlOut');
+      const ageOut = document.getElementById('ageOut');
+      const status = document.getElementById('cacheStatus');
+      const fill = document.getElementById('freshnessFill');
+      const headline = document.getElementById('labHeadline');
+      const detail = document.getElementById('labDetail');
+
+      function updateLab() {
+        const ttlValue = Number(ttl.value);
+        const ageValue = Number(age.value);
+        const fresh = ageValue < ttlValue;
+        const ratio = Math.min(100, (ageValue / ttlValue) * 100);
+        ttlOut.value = `${ttlValue}s`;
+        ageOut.value = `${ageValue}s`;
+        fill.style.width = `${ratio}%`;
+        fill.style.background = fresh
+          ? 'linear-gradient(90deg, var(--cyan), var(--green))'
+          : 'linear-gradient(90deg, var(--amber), var(--red))';
+        status.textContent = fresh ? 'CACHE HIT' : 'STALE';
+        status.className = `status-pill ${fresh ? 'hit' : 'stale'}`;
+        headline.textContent = fresh ? 'Serve directly from the edge' : 'Revalidate, refetch, or serve stale by policy';
+        detail.textContent = fresh
+          ? `The object remains fresh for ${ttlValue - ageValue} seconds. The origin is not contacted.`
+          : `Freshness expired ${ageValue - ttlValue} seconds ago. A validator may avoid retransmitting the body.`;
+      }
+      ttl.addEventListener('input', updateLab);
+      age.addEventListener('input', updateLab);
+      updateLab();
+
+      function fallbackCopy(text) {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+
+      document.querySelectorAll('.copy-button').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const text = button.closest('.code-block').querySelector('code').innerText;
+          try {
+            if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+            else fallbackCopy(text);
+            const original = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(() => { button.textContent = original; }, 1200);
+          } catch (_) {
+            button.textContent = 'Select manually';
+          }
+        });
+      });
+
+      const progress = document.getElementById('progressLine');
+      const sectionLinks = [...document.querySelectorAll('.toc a')];
+      const sections = sectionLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+
+      function updateScrollState() {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        progress.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
+        let current = sections[0]?.id;
+        sections.forEach((section) => {
+          if (section.getBoundingClientRect().top <= 140) current = section.id;
+        });
+        sectionLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${current}`));
+      }
+      document.addEventListener('scroll', updateScrollState, { passive: true });
+      window.addEventListener('resize', updateScrollState);
+      updateScrollState();
+    })();
+  </script>
+</body>
+</html>
