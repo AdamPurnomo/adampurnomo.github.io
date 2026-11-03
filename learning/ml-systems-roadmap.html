@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="24-week ML inference systems and research engineering roadmap: 48 action items with inline resources, one scheduling investigation, and protected buffer time.">
+<title>ML Systems & Research Engineer Roadmap · 24 Weeks</title>
+<style>
+:root{color-scheme:light;--bg:#f5f7fb;--panel:#fff;--ink:#1b2535;--secondary:#59677a;--muted:#7c899c;--border:#dfe5ee;--accent:#395bd4;--accent-soft:#ebf0ff;--teal:#087f73;--teal-soft:#e4f6f0;--surface:#f8faff;--shadow:0 14px 40px rgba(25,45,85,.06);--radius:17px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:86px}body{margin:0;color:var(--ink);background:var(--bg);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #93b2ff;outline-offset:2px}
+.wrap{width:min(1120px,calc(100% - 36px));margin:0 auto}.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}.topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:66px}.brand{display:flex;align-items:center;gap:10px;font-weight:790;letter-spacing:-.03em;font-size:15px;color:var(--ink)}.logo{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:750;font-size:16px}.nav{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.nav a{font-size:13px;color:var(--secondary);font-weight:700}.nav a:hover{color:var(--accent)}.nav .btn{font-size:12px}.btn{border:1px solid var(--border);background:var(--panel);padding:9px 13px;border-radius:10px;color:var(--ink);font-size:13px;font-weight:680;line-height:1.1;white-space:nowrap}.btn:hover{background:var(--surface)}.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn-primary:hover{background:#2c48b5}.btn-danger{color:#aa3747}.tiny{font-size:12px}.hero{padding:44px 0 32px;position:relative;overflow:hidden}.eyebrow{text-transform:uppercase;letter-spacing:.15em;color:var(--accent);font-size:11px;font-weight:850}.hero h1{font-weight:850;font-size:clamp(32px,5.2vw,56px);letter-spacing:-.055em;line-height:1.08;margin:10px 0 18px;max-width:800px}.lead{max-width:820px;color:#4e5d71;font-size:17px;line-height:1.7;margin:0}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.hero-ornament{position:absolute;right:-90px;top:-95px;width:320px;height:320px;background:radial-gradient(circle,rgba(82,116,232,.13),transparent 68%);pointer-events:none}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}.chip{border:1px solid #dce4f4;background:#fff;color:#43536c;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700}.main-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;align-items:start;gap:24px}.content{min-width:0}.aside{position:sticky;top:88px;display:flex;flex-direction:column;gap:14px}.panel,.month,.sidebox{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow)}.panel{padding:22px 24px;margin-bottom:22px}.section{padding-top:8px;margin-bottom:29px}.section h2{letter-spacing:-.035em;font-size:24px;margin:0 0 5px}.section-intro{color:var(--secondary);margin:0 0 17px}.sidebox{padding:17px}.sidebox h3{font-size:13px;margin:0 0 8px}.sidebox p{font-size:12px;color:var(--secondary);line-height:1.6;margin:6px 0}.progress-big{font-size:36px;letter-spacing:-.06em;font-weight:860;line-height:1;margin:12px 0}.progress-track{height:9px;border-radius:99px;background:#e7ebf4;overflow:hidden}.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#4c6fe5,#168e81);transition:width .2s}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{padding:15px;background:var(--surface);border:1px solid #e8edf7;border-radius:12px}.stat strong{font-size:23px;letter-spacing:-.04em;display:block}.stat span{color:var(--secondary);font-size:12px}.north{border-left:4px solid var(--accent);background:var(--accent-soft);padding:16px 17px;border-radius:0 12px 12px 0;margin:16px 0;font-size:14px}.north strong{display:block;margin-bottom:4px}.phase-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.phase-link{text-align:left;border:1px solid var(--border);border-radius:12px;background:#fff;padding:11px;min-height:90px}.phase-link:hover{border-color:#9eaff4;background:var(--surface)}.phase-link .n{display:block;font-size:11px;color:var(--accent);font-weight:800}.phase-link .t{display:block;color:var(--ink);font-size:13px;font-weight:740;margin:4px 0 8px;line-height:1.2}.phase-link .smalltrack{height:5px;background:#e9edf6;border-radius:10px;overflow:hidden}.phase-link .smalltrack span{display:block;background:var(--teal);height:100%}.month{margin-bottom:15px;overflow:hidden;scroll-margin-top:87px}.month summary{list-style:none;cursor:pointer;padding:19px 20px;display:flex;gap:14px;align-items:flex-start}.month summary::-webkit-details-marker{display:none}.phase-circle{border-radius:12px;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:13px;flex:0 0 40px;height:40px;display:grid;place-items:center}.phase-main{min-width:0;flex:1}.monthline{display:flex;gap:10px;align-items:baseline;justify-content:space-between}.date-label{font-size:11px;letter-spacing:.08em;font-weight:800;color:var(--secondary)}.month summary h3{font-size:19px;margin:3px 0 4px;letter-spacing:-.03em;line-height:1.25}.month summary p{font-size:12px;color:var(--secondary);margin:0}.month summary .right{display:flex;gap:8px;align-items:center}.count{font-size:12px;font-weight:800;color:var(--teal);white-space:nowrap}.chevron{font-size:19px;color:var(--secondary);transition:transform .15s}.month[open] .chevron{transform:rotate(180deg)}.month .smalltrack{margin-top:11px;height:5px;background:#e8edf5;border-radius:8px;overflow:hidden}.month .smalltrack span{display:block;background:var(--teal);height:100%;transition:width .2s}.monthbody{padding:0 20px 21px;border-top:1px solid #edf0f6}.callout{margin:16px 0;padding:14px 16px;background:#f1f5ff;border-radius:11px;font-size:13px}.callout strong{display:block;margin-bottom:4px}.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tag{background:#edf1f8;color:#52617a;border-radius:7px;padding:2px 8px;font-size:11px;font-weight:690}.weeks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:16px 0}.week{border:1px solid var(--border);border-radius:12px;padding:14px;background:#fff}.week h4{margin:0 0 10px;font-size:13px}.task{display:flex;align-items:flex-start;gap:9px;margin:12px 0 15px;color:#3f4f62;font-size:12.5px;line-height:1.55}.task input{appearance:none;-webkit-appearance:none;flex:0 0 17px;width:17px;height:17px;border-radius:5px;border:1.5px solid #a3aec0;background:#fff;margin:3px 0 0;cursor:pointer}.task input:checked{background:var(--teal);border-color:var(--teal)}.task input:checked::after{content:'✓';color:#fff;font-size:12px;display:block;text-align:center;line-height:14px;font-weight:bold}.task-main{min-width:0;flex:1}.task-text{display:block;cursor:pointer}.task input:checked + .task-main .task-text{color:#7c8899;text-decoration:line-through}.task-links{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-top:5px}.task-links::before{content:'Study →';font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:730;color:var(--muted)}.task-ref{display:inline-flex;align-items:center;border-radius:6px;background:#eef3fe;border:1px solid #e1e8fb;color:#3155ae;padding:2px 7px;font-size:11px;line-height:1.5;font-weight:650;text-decoration:none!important}.task-ref:hover{background:#dce8ff;border-color:#c4d7fc}.task-ref:after{content:'↗';font-size:10px;margin-left:4px}.task-ref:focus-visible{outline:2px solid #698cef;outline-offset:2px}.details-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.details-grid h4,.resources-inline h4{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--secondary);margin:0 0 7px}.details-grid ul{margin:0;padding-left:17px;font-size:12.5px;color:#4b586e;line-height:1.7}.mini-panel{padding:14px;border-radius:11px;background:#f8faff;border:1px solid #e9eef6}.artifact{margin:14px 0;padding:12px 14px;background:var(--teal-soft);border-left:3px solid var(--teal);font-size:12.5px;border-radius:0 10px 10px 0}.artifact strong{color:#096e62}.resources-inline{padding:14px 0 0}.links{display:flex;flex-wrap:wrap;gap:7px}.ref-link{border:1px solid #e0e6f0;background:#fff;border-radius:9px;padding:6px 9px;font-size:12px;font-weight:650}.ref-link:after{content:' ↗';color:#8396bc}.note{color:var(--secondary);font-size:12px;margin:12px 0 0}.notesbox{width:100%;margin-top:8px;min-height:68px;resize:vertical;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--ink);font-size:12px}.foot-section{margin:34px 0}.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.resource{display:block;border:1px solid var(--border);border-radius:12px;padding:13px 14px;background:#fff;color:var(--ink)}.resource:hover{text-decoration:none;border-color:#a5b8f0}.resource h4{font-size:13px;margin:4px 0;line-height:1.35}.resource .type{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--teal)}.resource p{color:var(--secondary);font-size:11.5px;margin:6px 0 0}.twocol{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.plainlist{margin:8px 0 0;padding-left:20px;color:#4e5c70;font-size:13px}.plainlist li{margin:6px 0}.track-card{border:1px solid var(--border);border-radius:12px;padding:16px;background:#fff}.track-card h3{font-size:15px;margin:0 0 5px}.track-card p{font-size:13px;color:var(--secondary);margin:0}.track-card .label{font-size:10px;font-weight:900;color:var(--accent);letter-spacing:.12em}.week-schedule{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.session{background:var(--surface);border:1px solid #e6ebf4;border-radius:10px;padding:12px}.session .day{font-weight:790;font-size:12px}.session .duration{font-size:12px;color:var(--teal);font-weight:750}.session p{font-size:11px;color:var(--secondary);margin:5px 0 0}.foot{border-top:1px solid var(--border);padding:25px 0 36px;color:var(--secondary);font-size:12px}.footer-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}.mobileprogress{display:none}.toolbar{display:flex;gap:7px;flex-wrap:wrap}.toolbar .btn{font-size:12px}.quiet{color:var(--secondary);font-size:12px}.print-note{display:none}#status{min-height:18px;margin-top:8px}a.external:after{content:' ↗';font-size:11px}
+@media(max-width:1000px){.main-grid{grid-template-columns:minmax(0,1fr) 235px}.week-schedule{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:780px){.main-grid{display:block}.aside{position:static;margin-bottom:22px;display:grid;grid-template-columns:repeat(2,1fr)}.nav a{display:none}.mobileprogress{display:inline-block;font-size:12px;color:var(--teal);font-weight:800}.hero{padding-top:29px}.hero h1{font-size:37px}.lead{font-size:15px}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.wrap{width:calc(100% - 24px)}.topbar-inner{min-height:58px}.brand{font-size:13px}.nav .btn{padding:8px 10px}.hero{padding-bottom:17px}.hero h1{font-size:31px}.panel{padding:17px}.aside{grid-template-columns:1fr}.phase-nav{grid-template-columns:repeat(2,1fr)}.weeks,.details-grid,.twocol,.resource-grid{grid-template-columns:1fr}.week-schedule{grid-template-columns:repeat(2,1fr)}.month summary{padding:14px}.monthbody{padding:0 14px 16px}.month summary h3{font-size:17px}.phase-circle{width:34px;height:34px;flex-basis:34px}.stats{gap:5px}.stat{padding:10px}.stat strong{font-size:19px}.stat span{font-size:10px}}
+@media print{@page{margin:13mm}body{background:#fff;font-size:11px}.topbar,.hero-actions,.toolbar,.aside,.notesbox,.notes-label{display:none!important}.main-grid{display:block}.wrap{width:100%}.hero{padding:0 0 10px}.hero h1{font-size:28px;margin:5px 0}.lead{font-size:12px}.panel,.month{box-shadow:none;break-inside:avoid}.month{break-inside:auto}.monthbody{display:block!important}.week,.mini-panel,.resource{break-inside:avoid}.print-note{display:block}.phase-nav{display:none}.section h2{font-size:17px}.foot-section{break-before:page}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="#top" aria-label="Back to top"><span class="logo">R</span><span>Research Engineer Roadmap</span></a><nav class="nav" aria-label="Main navigation"><a href="#overview">Overview</a><a href="#roadmap">Milestones</a><a href="#capstone">Capstone</a><a href="#references">Resources</a><button class="btn" id="printBtn" type="button">Print / PDF</button><span class="mobileprogress" id="mobileProgress">0%</span></nav></div></header>
+<div class="wrap" id="top">
+<section class="hero"><div class="hero-ornament"></div><div class="eyebrow">Build on production serving and prior research experience</div><h1>From systems engineer to <span style="color:var(--accent)">ML Systems &amp; Research Engineer.</span></h1><p class="lead">A 24-week roadmap centered on <strong>inference scheduling, KV-cache behavior and controlled experiments</strong>, supported by focused PyTorch, C++ and CUDA practice. Primary target: inference systems engineering. Adjacent target: research engineering in efficient inference.</p><div class="meta"><span class="chip">Nov 2026 → Apr 2027</span><span class="chip">~8 hours / week</span><span class="chip">RTX 3070-friendly</span><span class="chip">C++ before Rust</span><span class="chip">vLLM core · SGLang optional</span></div><div class="hero-actions"><a href="#roadmap" class="btn btn-primary">Start the milestones ↓</a><a href="#capstone" class="btn">See the end goal</a></div></section>
+<div class="main-grid">
+<main class="content">
+<section class="section" id="overview"><div class="panel"><div class="eyebrow">The north star</div><div class="north"><strong>By April 2027, be able to:</strong> Read an ML systems paper → reproduce a baseline → implement a modification in Python or low-level code → profile it → run controlled experiments → explain whether the hypothesis survived.</div><div class="stats"><div class="stat"><strong>24</strong><span>study weeks</span></div><div class="stat"><strong>6</strong><span>milestones</span></div><div class="stat"><strong>~192</strong><span>total available hours</span></div></div><div class="callout"><strong>156 planned hours + 36 hours of buffer</strong>Each month has 26 hours of core work and 6 hours for debugging, reruns or catch-up. Read only the sections needed for the action item; reference links are not a cover-to-cover reading list. Optional exercises do not affect completion.</div><p class="quiet">Build on your serving, concurrency and correctness experience and prior ML research. This plan develops inference-systems evidence; training-focused research roles need a separate training/evaluation and distributed-training branch.</p><h3 style="font-size:14px;margin:20px 0 10px">Jump to a milestone</h3><div class="phase-nav" id="phaseNav"></div></div></section>
+<section class="section" id="roadmap"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><h2>Milestones & checklists</h2><p class="section-intro">Four weekly sprints per milestone, with two core action items each. Tick tasks after producing evidence; use the monthly exit criteria to judge readiness.</p></div><div class="toolbar"><button class="btn" id="expandBtn">Expand all</button><button class="btn" id="collapseBtn">Collapse all</button></div></div><div id="months"></div></section>
+<section class="section" id="capstone"><h2>Capstone: one inference-systems investigation</h2><p class="section-intro">Choose the question in Month 2, produce baseline plots by Month 3, and spend Months 4–5 testing and explaining one result.</p><div class="panel"><div class="twocol"><div class="track-card"><div class="label">DEFAULT TRACK</div><h3>Scheduling + KV-cache behavior</h3><p>Under mixed short/long prompts, how does the prefill token budget affect tail time-to-first-token and decode latency as offered load increases? Characterize existing behavior, then test one bounded change against the default policy and a tuned static baseline.</p></div><div class="track-card"><div class="label">ALTERNATIVE · REPLACE, DO NOT ADD</div><h3>Speculative decoding</h3><p>Choose this instead if algorithmic decoding interests you more. Fit a target/draft pair early, reproduce a baseline and test one narrow trade-off. Check existing adaptive methods and validate sampling assumptions. Keep the same experiment and reporting gates.</p></div></div><div class="callout"><strong>Research quality bar</strong> Predeclare a falsifiable hypothesis and constraints. Separate tuning from evaluation; control model, workload and runtime settings; report sample counts, uncertainty, failures and per-class latency. Label simulated results and validate selected trends on a real runtime. A rigorous reproduction or negative result can succeed; novelty is optional.</div><h3 style="font-size:14px;margin:18px 0 8px">Final repository structure (suggestion)</h3><pre style="white-space:pre-wrap;background:#142139;color:#e9f2ff;border-radius:12px;padding:17px;font-size:12px;line-height:1.7;overflow:auto">ml-systems-portfolio/
+├── inference-research/    # the main portfolio evidence
+│   ├── configs/           # pinned baselines, workload and variant
+│   ├── experiments/      # runnable harness + correctness checks
+│   ├── results/           # raw measurements, metadata and plots
+│   └── report.md          # methods, findings and limitations
+├── foundations/          # supporting learning exercises
+│   ├── pytorch/
+│   ├── native/
+│   └── cuda/
+├── career/               # role matrix and feedback notes
+└── README.md             # reproduce the main result first</pre></div></section>
+<section class="section" id="routine"><h2>A sustainable weekly routine</h2><p class="section-intro">Eight hours available per week: plan 6.5 hours of core work and reserve 1.5 hours for recovery.</p><div class="panel"><div class="week-schedule"><div class="session"><div class="day">Tuesday</div><div class="duration">1 hour</div><p>Math, a paper, or design notes.</p></div><div class="session"><div class="day">Thursday</div><div class="duration">1.5 hours</div><p>Coding practice or source reading.</p></div><div class="session"><div class="day">Saturday</div><div class="duration">3.5 hours</div><p>Deep implementation and experiments.</p></div><div class="session"><div class="day">Sunday</div><div class="duration">0.5h review + 1.5h buffer</div><p>Record results; use the buffer for debugging or catch-up. Leave it free when not needed.</p></div></div><div class="note" style="margin-top:15px"><strong>Rules:</strong> Have a deliverable every month. Protect Saturdays. If a week is missed, resume rather than doubling workload. Skip optional detours before delaying the experiment. Start feedback and selective applications in Months 2–3; do not wait for every checkbox.</div></div></section>
+<section class="section" id="references"><h2>Reference library</h2><p class="section-intro">Curated official documentation, source code and foundational papers. Links require internet; the roadmap itself runs offline.</p><div class="panel"><div class="resource-grid" id="allReferences"></div></div></section>
+<section class="section"><h2>What not to overinvest in</h2><div class="panel"><ul class="plainlist"><li><strong>Rust:</strong> valuable later, but defer until C++/CUDA and the research project are solid. Add it only if your target role requires it.</li><li><strong>Both frameworks at once:</strong> go deep on vLLM scheduling first. Compare SGLang only when it answers the same research question; it is never a completion gate.</li><li><strong>Standalone native exercises:</strong> one C++ benchmark and two CUDA kernels are enough for this plan. Skip custom containers, extra bindings and additional kernels unless the project requires them.</li><li><strong>Framework deployment:</strong> don't spend weeks on serving dashboards, Kubernetes setup or API wrappers. Your goal is research-engineering competence.</li><li><strong>Unnecessary GPU scale:</strong> start with small models and trace analysis on your RTX 3070. Label simulator assumptions and validate selected runtime trends; a single GPU does not establish multi-GPU training experience.</li><li><strong>Forced novelty:</strong> a clean reproduction and honest failure analysis is better than a weak, unverified “new algorithm.”</li></ul></div></section>
+</main>
+<aside class="aside" aria-label="Progress and controls">
+<div class="sidebox"><h3>Your progress</h3><div class="progress-big"><span id="pct">0</span><span style="font-size:18px;color:var(--secondary)">%</span></div><div class="progress-track" role="progressbar" aria-label="Overall completed tasks" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="overallBar"><div class="progress-fill" id="fill" style="width:0%"></div></div><p id="progressText">0 of 48 tasks completed</p><p id="focusText" style="font-weight:720;color:var(--ink)">Focus: Month 1 · PyTorch</p></div>
+<div class="sidebox"><h3>Your progress stays on this browser</h3><p>Checkmarks and notes are saved locally. This revised plan uses a new checklist because the tasks changed. Earlier progress stays stored separately; export it below if available. Export a backup before moving devices or clearing browser data.</p><div class="toolbar"><button class="btn btn-primary" id="exportBtn">Export backup</button><button class="btn" id="importBtn">Import</button><input id="importFile" type="file" accept=".json,application/json" hidden></div><div id="status" class="quiet" role="status" aria-live="polite"></div></div>
+<div class="sidebox"><h3>Study principles</h3><p>Measure, don't guess.<br>Understand, don't memorize.<br>Write down failures.<br>Ship one credible artifact.</p><button class="btn btn-danger" id="resetBtn">Reset all progress</button></div>
+</aside>
+</div>
+<footer class="foot"><div class="wrap footer-row"><div><strong>Research Engineer Roadmap</strong><div>48 core tasks with inline reading links · Optional extensions excluded from progress.</div></div><div>Revised November 2026 · 156h core + 36h buffer · Review roles at each monthly gate.</div></div></footer>
+</div>
+<script id="roadmap-data" type="application/json">{
+  "months": [
+    {
+      "id": "m1",
+      "month": "NOV 2026",
+      "name": "PyTorch Diagnostic & Model Fundamentals",
+      "theme": "Refresh only what the evidence says you need",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "PyTorch",
+        "Correctness",
+        "Role targeting"
+      ],
+      "outcome": "Build a tiny decoder with trustworthy training and cached inference; identify the specific inference roles you want to pursue.",
+      "gate": [
+        "You can explain tensor shapes, causal masking, cross-entropy, gradient flow and numerical stability.",
+        "A tiny batch can be overfit; held-out loss is tracked; a checkpoint resumes training with optimizer state.",
+        "Cached and uncached logits agree within stated tolerances; hardware feasibility and a target-role matrix are recorded."
+      ],
+      "weeks": [
+        {
+          "title": "Week 1 · Diagnose skills & select targets",
+          "tasks": [
+            "Run a PyTorch diagnostic: build a small network, overfit one tiny batch, inspect gradients and explain the loss. Use the basics only for gaps you uncover.",
+            "Collect 6–8 live role descriptions; separate inference systems, inference research and training roles. Map your serving achievements and prior research to their requirements."
+          ],
+          "task_refs": [
+            [
+              "ptquick",
+              "ptautograd"
+            ],
+            [
+              "anthropicjobs",
+              "sakanajobs"
+            ]
+          ]
+        },
+        {
+          "title": "Week 2 · Attention & hardware feasibility",
+          "tasks": [
+            "Derive Q/K/V shapes and implement causal attention; compare against a trusted reference over several shapes and explain numerical stability.",
+            "Smoke-test a small supported pretrained model on your RTX 3070 with a short prompt and intended context length; record peak memory and pinned software versions. Timebox setup to one study session."
+          ],
+          "task_refs": [
+            [
+              "attention",
+              "sdpa",
+              "pttest"
+            ],
+            [
+              "vllmgpu",
+              "kv"
+            ]
+          ]
+        },
+        {
+          "title": "Week 3 · Train & resume a tiny decoder",
+          "tasks": [
+            "Implement or adapt a tiny decoder with multi-head attention, normalization and embeddings; explain every component and train on a small fixed dataset with a held-out split.",
+            "Plot training and validation loss, inspect overfitting or leakage, and verify checkpoint resume restores model, optimizer and relevant RNG state. Document remaining nondeterminism."
+          ],
+          "task_refs": [
+            [
+              "nanogpt",
+              "transformerblocks"
+            ],
+            [
+              "checkpoint",
+              "ptrepro"
+            ]
+          ]
+        },
+        {
+          "title": "Week 4 · KV cache & first measurements",
+          "tasks": [
+            "Add a simple KV cache and autoregressive generation; test cached versus uncached logits and edge cases within stated numerical tolerances.",
+            "Separate prefill from decode timing, capture a profile and record memory use. Write a short baseline note and decide which fundamentals need further practice."
+          ],
+          "task_refs": [
+            [
+              "kv",
+              "pttest"
+            ],
+            [
+              "ptprofiler",
+              "ptbench"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "ptquick",
+        "ptautograd",
+        "anthropicjobs",
+        "sakanajobs",
+        "attention",
+        "sdpa",
+        "pttest",
+        "vllmgpu",
+        "kv",
+        "nanogpt",
+        "transformerblocks",
+        "checkpoint",
+        "ptrepro",
+        "ptprofiler",
+        "ptbench"
+      ],
+      "artifact": " foundations/pytorch/: tested decoder, loss curves, checkpoint-resume check, KV-cache profile; career/target-roles.md; environment.md",
+      "notnow": "Treat prior PyTorch experience as a diagnostic advantage. Do not repeat tutorials you can already demonstrate. Keep model and dataset tiny; if vLLM setup exceeds one session, continue with PyTorch and record the runtime blocker.",
+      "optional": [
+        {
+          "text": "If the target-role matrix favors training research, plan a substitution: replace optional native/framework work with a small training-data or fine-tuning evaluation and DDP practice. Reading DDP or simulating processes does not demonstrate multi-GPU experience.",
+          "refs": [
+            "ddp",
+            "checkpoint"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "month": "DEC 2026",
+      "name": "Serving Baseline & Focused C++",
+      "theme": "Choose the question and start the capstone now",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "vLLM",
+        "Scheduling",
+        "C++ refresh"
+      ],
+      "outcome": "Trace a real serving request, establish a small workload harness and define the scheduling question; refresh only the native concepts needed for performance reasoning.",
+      "gate": [
+        "You can trace admission, token budgets, KV allocation and preemption in a pinned vLLM release.",
+        "A benchmark records workload inputs, offered load, per-request timings, failures and memory use.",
+        "A one-page research question and a tested native benchmark exist; at least one request for technical feedback has been prepared or sent."
+      ],
+      "weeks": [
+        {
+          "title": "Week 5 · Understand the scheduler",
+          "tasks": [
+            "Trace a request through the V1 scheduler, KV-cache manager and worker. Draw where requests wait, receive token budget, run, finish or are preempted. Pin the source commit.",
+            "Read Sarathi-Serve’s scheduling argument and current vLLM tuning docs. Frame one question about prefill token budget under mixed short/long prompts; separate historical paper behavior from current runtime behavior."
+          ],
+          "task_refs": [
+            [
+              "vllmdocs",
+              "vllmsource",
+              "paged"
+            ],
+            [
+              "sarathi",
+              "vllmtuning"
+            ]
+          ]
+        },
+        {
+          "title": "Week 6 · Build the workload harness",
+          "tasks": [
+            "Use or adapt the serving benchmark for a small fixed prompt set and short/long prompt mix. Record offered arrival rate, concurrency, output lengths, model, dtype, cache settings and seeds.",
+            "Capture time to first token, inter-token latency, throughput, queue wait, failures and memory/cache pressure where exposed. Define precisely what each metric includes and record sample counts."
+          ],
+          "task_refs": [
+            [
+              "vllmbench",
+              "ptrepro"
+            ],
+            [
+              "vllmmetrics",
+              "vllmbench"
+            ]
+          ]
+        },
+        {
+          "title": "Week 7 · Refresh native performance",
+          "tasks": [
+            "Refresh RAII, move semantics and contiguous storage. Implement one small numerical operation using standard containers; compile with warnings and sanitizers and check correctness.",
+            "Compare loop order or blocked versus naive execution across three working-set sizes; explain cache effects and compare with a tuned library. Stop after one useful benchmark."
+          ],
+          "task_refs": [
+            [
+              "cpp",
+              "cppref",
+              "clangasan"
+            ],
+            [
+              "matmulopt",
+              "googlebench"
+            ]
+          ]
+        },
+        {
+          "title": "Week 8 · Freeze scope & get feedback",
+          "tasks": [
+            "Write the experiment brief: one question, baseline policy, workload split, primary metric, throughput/fairness constraints and a modest run budget. Keep the first study to a few informative conditions.",
+            "Share or prepare the request trace and initial measurements for technical feedback. Update the role matrix, select well-matched applications and identify one concrete documentation or reproducibility issue."
+          ],
+          "task_refs": [
+            [
+              "checklist",
+              "vllmtuning"
+            ],
+            [
+              "vllmcontrib",
+              "anthropicjobs",
+              "sakanajobs"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "vllmdocs",
+        "vllmsource",
+        "paged",
+        "sarathi",
+        "vllmtuning",
+        "vllmbench",
+        "ptrepro",
+        "vllmmetrics",
+        "cpp",
+        "cppref",
+        "clangasan",
+        "matmulopt",
+        "googlebench",
+        "checklist",
+        "vllmcontrib",
+        "anthropicjobs",
+        "sakanajobs"
+      ],
+      "artifact": " inference-research/: workload harness, configs, request trace and experiment-brief.md; foundations/native/: one benchmark; career/feedback-log.md",
+      "notnow": "Drop the custom matrix container and thread-pool exercises. Use the runtime’s existing policy as the baseline. If GPU serving remains blocked, build a clearly labeled simulator and schedule a small real-runtime validation; do not present simulator output as GPU evidence.",
+      "optional": [
+        {
+          "text": "Only if the capstone needs a native boundary, expose the tested operation with a PyTorch custom operator or pybind11 and measure call overhead.",
+          "refs": [
+            "ptcpp",
+            "ptext",
+            "pybind"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "month": "JAN 2027",
+      "name": "GPU Fundamentals & Baseline Analysis",
+      "theme": "Use hardware understanding to explain measured behavior",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "CUDA",
+        "Profiling",
+        "Baseline plots"
+      ],
+      "outcome": "Write two small correct CUDA kernels and use profiling to explain the capstone baseline; have a reproducible plot by Week 12.",
+      "gate": [
+        "Vector addition and one reduction pass tests across sizes, including awkward lengths and numerical tolerances.",
+        "Timings include warmup, synchronization, hardware and dtype; kernel time is distinguished from end-to-end latency.",
+        "A clean rerun produces the first serving trade-off plot and a defensible bottleneck explanation."
+      ],
+      "weeks": [
+        {
+          "title": "Week 9 · CUDA execution model",
+          "tasks": [
+            "Study threads, warps, blocks and memory movement; implement vector addition and test boundaries and CPU/GPU agreement.",
+            "Benchmark with warmup and CUDA events or explicit synchronization; separate transfers, launches and compute. Record effective bandwidth and compare with a suitable reference."
+          ],
+          "task_refs": [
+            [
+              "cuda",
+              "cudasamples"
+            ],
+            [
+              "cudabest",
+              "ptbench"
+            ]
+          ]
+        },
+        {
+          "title": "Week 10 · Reduction & memory behavior",
+          "tasks": [
+            "Implement a reduction using a documented example; test non-multiple sizes, large/small values and accumulation tolerance against PyTorch.",
+            "Profile the two kernels and explain coalescing, launch overhead, occupancy and memory-versus-compute limits without assuming higher occupancy always means faster execution."
+          ],
+          "task_refs": [
+            [
+              "cudasamples",
+              "pttest"
+            ],
+            [
+              "nsightcompute",
+              "cudabest"
+            ]
+          ]
+        },
+        {
+          "title": "Week 11 · Profile the serving path",
+          "tasks": [
+            "Capture a short serving timeline connecting queueing, prefill, decode and GPU activity. Form a bottleneck explanation and identify which measurement would falsify it.",
+            "Run a small token-budget sweep at low and higher offered load, holding model, prompt mix and cache behavior fixed. Preserve request-level results and failures."
+          ],
+          "task_refs": [
+            [
+              "nsight",
+              "ptprofiler",
+              "vllmdocs"
+            ],
+            [
+              "vllmtuning",
+              "vllmbench"
+            ]
+          ]
+        },
+        {
+          "title": "Week 12 · First plot & baseline gate",
+          "tasks": [
+            "Plot first-token and decode latency versus load alongside achieved throughput. Repeat selected conditions, record sample counts and avoid strong P99 claims from a small sample.",
+            "Rerun one condition from a clean environment, write the baseline memo and seek feedback. Practice a short systems/project explanation and begin selective applications where existing experience fits."
+          ],
+          "task_refs": [
+            [
+              "matplotlib",
+              "vllmmetrics"
+            ],
+            [
+              "githubreadme",
+              "checklist",
+              "anthropicjobs"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "cuda",
+        "cudasamples",
+        "cudabest",
+        "ptbench",
+        "pttest",
+        "nsightcompute",
+        "nsight",
+        "ptprofiler",
+        "vllmdocs",
+        "vllmtuning",
+        "vllmbench",
+        "matplotlib",
+        "vllmmetrics",
+        "githubreadme",
+        "checklist",
+        "anthropicjobs"
+      ],
+      "artifact": " foundations/cuda/: two tested kernels and benchmarks; inference-research/results/: first plot, trace and baseline-memo.md",
+      "notnow": "Two kernels are enough. Do not optimize them indefinitely or force a CUDA change into a scheduler project. Account for profiling overhead; collect final latency numbers without the profiler enabled.",
+      "optional": [
+        {
+          "text": "If the core baseline is complete, try Triton vector addition or fused softmax; compare correctness and benchmark conditions. This is enrichment, not an exit criterion.",
+          "refs": [
+            "triton",
+            "nsightcompute"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m4",
+      "month": "FEB 2027",
+      "name": "Reproduction & One Controlled Intervention",
+      "theme": "Use prior work to choose a testable change",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "Literature",
+        "Hypothesis",
+        "Fair baselines"
+      ],
+      "outcome": "Reproduce one scheduling trade-off and test one narrowly scoped change against fair existing baselines.",
+      "gate": [
+        "A literature note identifies the reproduced claim, relevant follow-ups and differences in model, hardware and runtime.",
+        "The default policy, a tuned static baseline and the variant share controlled conditions; tuning and evaluation workloads are separated.",
+        "Correctness and fairness checks pass, and initial results answer a predeclared hypothesis even if the change loses."
+      ],
+      "weeks": [
+        {
+          "title": "Week 13 · Reproduce a bounded claim",
+          "tasks": [
+            "Read the relevant Sarathi-Serve sections plus a scheduling follow-up; search for newer related work and write a one-page claim/assumptions table. Avoid claiming novelty for existing chunked-prefill ideas.",
+            "Reproduce a qualitative scheduling trade-off on local hardware. Identify differences from the published setup and explain which conclusions the smaller experiment can actually support."
+          ],
+          "task_refs": [
+            [
+              "sarathi",
+              "schedfollow",
+              "paged"
+            ],
+            [
+              "vllmtuning",
+              "checklist"
+            ]
+          ]
+        },
+        {
+          "title": "Week 14 · Specify the intervention",
+          "tasks": [
+            "Use the baseline evidence to choose one change, such as a bounded token-budget rule triggered by queue mix. State its expected benefit, primary metric, throughput constraint and failure conditions before testing.",
+            "Freeze the default-policy baseline and select a tuned static budget on development workloads. Reserve a separate prompt set or arrival pattern for evaluation; pin all configurations and code revisions."
+          ],
+          "task_refs": [
+            [
+              "vllmsource",
+              "vllmtuning",
+              "checklist"
+            ],
+            [
+              "vllmbench",
+              "ptrepro"
+            ]
+          ]
+        },
+        {
+          "title": "Week 15 · Implement & check correctness",
+          "tasks": [
+            "Implement the smallest controllable variant in a runtime fork or labeled simulator. Test request completion, token accounting, cache safety and progress of both short and long requests.",
+            "Compare outputs under identical deterministic settings with tolerances appropriate to the backend. For simulation, calibrate timing assumptions and validate selected trends against the actual runtime before making runtime claims."
+          ],
+          "task_refs": [
+            [
+              "vllmsource",
+              "pytest",
+              "pttest"
+            ],
+            [
+              "ptrepro",
+              "vllmmetrics"
+            ]
+          ]
+        },
+        {
+          "title": "Week 16 · Run the first comparison",
+          "tasks": [
+            "Compare default, tuned static and variant policies on held-out workloads under matched conditions. Repeat runs, alternate execution order and retain errors and timeouts in the results.",
+            "Write a methods/results memo with latency, throughput, memory and per-class fairness. Keep a losing result; explain the mechanism and decide which one uncertainty to investigate next."
+          ],
+          "task_refs": [
+            [
+              "vllmbench",
+              "ptbench"
+            ],
+            [
+              "matplotlib",
+              "checklist"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "sarathi",
+        "schedfollow",
+        "paged",
+        "vllmtuning",
+        "checklist",
+        "vllmsource",
+        "vllmbench",
+        "ptrepro",
+        "pytest",
+        "pttest",
+        "vllmmetrics",
+        "ptbench",
+        "matplotlib"
+      ],
+      "artifact": " inference-research/: literature.md, frozen configs, baseline + variant, correctness checks, first-comparison.md",
+      "notnow": "A configuration study or careful negative result can meet the research goal. Do not add a second algorithm, change models mid-comparison or compare a variant only against an intentionally weak baseline.",
+      "optional": [
+        {
+          "text": "Alternative capstone only: replace the scheduling study with speculative decoding. First fit a compatible target/draft pair, then check greedy correctness and sampling-distribution assumptions; identical seeded strings are not a general sampling-correctness test. Do not run both capstones.",
+          "refs": [
+            "spec",
+            "hfassist",
+            "speceval"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m5",
+      "month": "MAR 2027",
+      "name": "Ablations, Counterexamples & Robustness",
+      "theme": "Find where the result stops working",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "Ablations",
+        "Fairness",
+        "Interpretation"
+      ],
+      "outcome": "Explain the mechanism, evaluate failure cases and tighten the scope of the claims; a second framework is optional.",
+      "gate": [
+        "One ablation and one meaningful failure case or boundary condition are documented.",
+        "Held-out workload results include uncertainty, sample counts, request failures and per-class latency.",
+        "Claims distinguish observed runtime results, simulator assumptions and untested generalization."
+      ],
+      "weeks": [
+        {
+          "title": "Week 17 · Ablate the mechanism",
+          "tasks": [
+            "Disable one component of the variant or hold its control signal fixed. Compare against the complete variant to test whether the proposed mechanism explains the effect.",
+            "Sweep one relevant threshold or budget on a small grid. Keep evaluation data separate from tuning and include the additional measurement overhead introduced by the policy."
+          ],
+          "task_refs": [
+            [
+              "checklist",
+              "vllmtuning"
+            ],
+            [
+              "vllmbench",
+              "ptbench"
+            ]
+          ]
+        },
+        {
+          "title": "Week 18 · Probe failure cases",
+          "tasks": [
+            "Change one workload dimension at a time: arrival burstiness, short/long prompt ratio or output length. Include a condition expected to erase or reverse the benefit.",
+            "Inspect per-class tail latency, long-request progress, timeouts and KV pressure. Check whether an apparent aggregate win hides starvation or dropped work."
+          ],
+          "task_refs": [
+            [
+              "vllmbench",
+              "sarathi"
+            ],
+            [
+              "vllmmetrics",
+              "vllmsource"
+            ]
+          ]
+        },
+        {
+          "title": "Week 19 · Check robustness",
+          "tasks": [
+            "Repeat the key comparison over independent runs and report run-to-run uncertainty and sample counts. Keep cache warm/cold state explicit and avoid treating correlated token latencies as independent trials.",
+            "Investigate the largest mismatch between your hypothesis and measurements. Use profiling or a targeted rerun; keep a counterexample log rather than broadening the experiment matrix."
+          ],
+          "task_refs": [
+            [
+              "ptrepro",
+              "ptbench",
+              "checklist"
+            ],
+            [
+              "ptprofiler",
+              "nsight"
+            ]
+          ]
+        },
+        {
+          "title": "Week 20 · Write the argument",
+          "tasks": [
+            "Create final plots and a concise report: hypothesis, baseline selection, method, results, failure cases and limits. Distinguish local-GPU evidence from predictions about datacenter hardware.",
+            "Ask for technical review or prepare a concrete review packet; update the project summary and target applications using feedback. Explain the result in five minutes without relying on framework names."
+          ],
+          "task_refs": [
+            [
+              "matplotlib",
+              "checklist"
+            ],
+            [
+              "githubreadme",
+              "sakanajobs",
+              "anthropicjobs"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "checklist",
+        "vllmtuning",
+        "vllmbench",
+        "ptbench",
+        "sarathi",
+        "vllmmetrics",
+        "vllmsource",
+        "ptrepro",
+        "ptprofiler",
+        "nsight",
+        "matplotlib",
+        "githubreadme",
+        "sakanajobs",
+        "anthropicjobs"
+      ],
+      "artifact": " inference-research/: ablations, sensitivity plots, counterexamples.md and report draft; career/project-summary.md",
+      "notnow": "Do not require SGLang installation or a framework race to finish this milestone. Prefer one well-supported result over a large matrix of noisy experiments. Optional work must fit unused core time, not consume the recovery buffer.",
+      "optional": [
+        {
+          "text": "Only when it answers the same research question, compare one SGLang scheduling or prefix-reuse choice with vLLM. Match workload, model, dtype and cache settings; otherwise limit the result to an architecture note.",
+          "refs": [
+            "sglang",
+            "sglangpaper",
+            "vllmprefix"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m6",
+      "month": "APR 2027",
+      "name": "Reproducible Portfolio & Applications",
+      "theme": "Turn the investigation into evidence others can assess",
+      "hours": "26h core + 6h buffer",
+      "tags": [
+        "Reproducibility",
+        "Open source",
+        "Interviews"
+      ],
+      "outcome": "Publish one coherent inference-systems investigation and use it alongside your production serving and prior research experience.",
+      "gate": [
+        "Another person can reproduce the main result, or a clean-environment rehearsal documents every step and remaining gap.",
+        "The report supports its claims with configs, raw results, plots, limitations and a concise explanation.",
+        "An evidence-based résumé, target-role list and application/feedback log are current; a merged PR or paper is not required."
+      ],
+      "weeks": [
+        {
+          "title": "Week 21 · Make reproduction easy",
+          "tasks": [
+            "Pin dependencies, model revisions, source commit and benchmark configs. Provide a quick CPU correctness path and separate GPU commands with expected memory and runtime requirements.",
+            "Run automated correctness checks and regenerate plots from saved raw data. Ask another engineer to follow the README; if unavailable, rehearse in a clean environment and state that limitation."
+          ],
+          "task_refs": [
+            [
+              "githubreadme",
+              "ptrepro"
+            ],
+            [
+              "pytest",
+              "githubactions"
+            ]
+          ]
+        },
+        {
+          "title": "Week 22 · Publish the investigation",
+          "tasks": [
+            "Finalize the report with methods, baseline rationale, workload definitions, uncertainty, counterexamples and limits. Publish the repository and report when ready; retain reproducible raw results.",
+            "Write a short project summary and rehearse a five-minute explanation plus a deeper technical walkthrough. Explain one design choice, one failed hypothesis and what experiment you would run next."
+          ],
+          "task_refs": [
+            [
+              "checklist",
+              "githubreadme"
+            ],
+            [
+              "checklist",
+              "matplotlib"
+            ]
+          ]
+        },
+        {
+          "title": "Week 23 · Contribute & practice interviews",
+          "tasks": [
+            "Turn a concrete issue found during the project into a focused PR, reproduction report or actionable technical discussion. Follow contribution guidance; a useful attempt is sufficient.",
+            "Practice a Python/PyTorch debugging exercise and an inference-system design discussion. Connect profiling, batching, queueing, KV pressure and fairness to your production serving experience."
+          ],
+          "task_refs": [
+            [
+              "vllmcontrib",
+              "githubcontrib"
+            ],
+            [
+              "ptprofiler",
+              "vllmdocs",
+              "vllmtuning"
+            ]
+          ]
+        },
+        {
+          "title": "Week 24 · Apply & choose the next gap",
+          "tasks": [
+            "Update the résumé with measured project findings, your Indeed serving accomplishments and prior publication. Tailor applications to inference systems or efficient-inference research roles and maintain 8–12 target teams.",
+            "Review application and technical feedback; choose the next focused gap: deeper kernels, distributed inference or training/evaluation. Write a follow-up plan tied to actual role requirements."
+          ],
+          "task_refs": [
+            [
+              "anthropicjobs",
+              "sakanajobs",
+              "deepmindcareer"
+            ],
+            [
+              "vllmdocs",
+              "ddp",
+              "triton"
+            ]
+          ]
+        }
+      ],
+      "refs": [
+        "githubreadme",
+        "ptrepro",
+        "pytest",
+        "githubactions",
+        "checklist",
+        "matplotlib",
+        "vllmcontrib",
+        "githubcontrib",
+        "ptprofiler",
+        "vllmdocs",
+        "vllmtuning",
+        "anthropicjobs",
+        "sakanajobs",
+        "deepmindcareer",
+        "ddp",
+        "triton"
+      ],
+      "artifact": " public portfolio: README, reproducible experiment, technical report and project summary; updated résumé and application log",
+      "notnow": "Applications and feedback started earlier; this month improves the evidence. Keep foundations as supporting exercises and put the investigation first. No requirement for a publication, merged PR, multiple frameworks or a new algorithm.",
+      "optional": [
+        {
+          "text": "For a confirmed training-focused target, substitute a later follow-up project on data/model evaluation and real multi-GPU job debugging. Do not claim that this single-GPU inference roadmap establishes distributed-training experience.",
+          "refs": [
+            "ddp",
+            "checkpoint"
+          ]
+        }
+      ]
+    }
+  ],
+  "resources": {
+    "ptprofiler": {
+      "title": "PyTorch Profiler Recipe",
+      "type": "Official tutorial",
+      "url": "https://docs.pytorch.org/tutorials/recipes/recipes/profiler_recipe.html",
+      "note": "Locate CPU/GPU bottlenecks and read traces."
+    },
+    "ptcpp": {
+      "title": "PyTorch C++ / CUDA Extensions",
+      "type": "Official tutorial",
+      "url": "https://docs.pytorch.org/tutorials/extension.html",
+      "note": "Build and test native operators callable from Python."
+    },
+    "ptext": {
+      "title": "PyTorch C++ Extension Examples",
+      "type": "Source code",
+      "url": "https://github.com/pytorch/extension-cpp",
+      "note": "Minimal C++ and CUDA operator examples."
+    },
+    "cpp": {
+      "title": "LearnCpp",
+      "type": "Learning guide",
+      "url": "https://www.learncpp.com/",
+      "note": "Modern C++ ownership, RAII, move semantics, templates."
+    },
+    "cppref": {
+      "title": "C++ Reference",
+      "type": "Reference",
+      "url": "https://en.cppreference.com/w/cpp",
+      "note": "Look up library and language details as needed."
+    },
+    "vllmdocs": {
+      "title": "vLLM Architecture Overview",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/design/arch_overview/",
+      "note": "V1 engine core, token-budget scheduler, KV cache, workers."
+    },
+    "vllmsource": {
+      "title": "vLLM V1 Scheduler Source",
+      "type": "Source code",
+      "url": "https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/scheduler.py",
+      "note": "Trace scheduling decisions in live source."
+    },
+    "vllmcontrib": {
+      "title": "Contributing to vLLM",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/contributing/",
+      "note": "Development, tests, and contribution process."
+    },
+    "paged": {
+      "title": "PagedAttention / vLLM paper (SOSP 2023)",
+      "type": "Paper",
+      "url": "https://arxiv.org/abs/2309.06180",
+      "note": "Virtual-memory ideas applied to KV cache management."
+    },
+    "cuda": {
+      "title": "NVIDIA CUDA Programming Guide",
+      "type": "Official documentation",
+      "url": "https://docs.nvidia.com/cuda/cuda-programming-guide/index.html",
+      "note": "Execution model, memory hierarchy, CUDA C++."
+    },
+    "nsight": {
+      "title": "NVIDIA Nsight Systems",
+      "type": "Official documentation",
+      "url": "https://docs.nvidia.com/nsight-systems/",
+      "note": "Profile execution timelines and GPU activity."
+    },
+    "nsightcompute": {
+      "title": "NVIDIA Nsight Compute",
+      "type": "Official documentation",
+      "url": "https://docs.nvidia.com/nsight-compute/",
+      "note": "Inspect kernel-level performance."
+    },
+    "triton": {
+      "title": "Triton Tutorials",
+      "type": "Official tutorial",
+      "url": "https://triton-lang.org/main/getting-started/tutorials/",
+      "note": "Vector add, fused softmax, matrix multiplication."
+    },
+    "attention": {
+      "title": "Attention Is All You Need",
+      "type": "Paper",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "note": "Foundational Transformer architecture."
+    },
+    "spec": {
+      "title": "Fast Inference from Transformers via Speculative Decoding",
+      "type": "Paper · ICML 2023",
+      "url": "https://proceedings.mlr.press/v202/leviathan23a.html",
+      "note": "Distribution-preserving speculative sampling."
+    },
+    "speceval": {
+      "title": "Decoding Speculative Decoding",
+      "type": "Paper",
+      "url": "https://arxiv.org/abs/2402.01528",
+      "note": "Empirical factors controlling speculation speedups."
+    },
+    "sglang": {
+      "title": "SGLang Official Docs",
+      "type": "Official documentation",
+      "url": "https://docs.sglang.io/",
+      "note": "Runtime architecture and serving features."
+    },
+    "sglangpaper": {
+      "title": "SGLang: Efficient Execution of Structured Language Model Programs",
+      "type": "Paper",
+      "url": "https://arxiv.org/abs/2312.07104",
+      "note": "RadixAttention, prefix reuse, structured execution."
+    },
+    "ptautograd": {
+      "title": "Autograd mechanics",
+      "type": "Tutorial",
+      "url": "https://docs.pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html",
+      "note": "Automatic differentiation basics",
+      "short": "Autograd"
+    },
+    "ptquick": {
+      "title": "PyTorch Quickstart",
+      "type": "Tutorial",
+      "url": "https://docs.pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html",
+      "note": "Create datasets, models, training loops",
+      "short": "Quickstart"
+    },
+    "ptrepro": {
+      "title": "PyTorch Reproducibility Notes",
+      "type": "Docs",
+      "url": "https://docs.pytorch.org/docs/stable/notes/randomness.html",
+      "note": "Seeds, nondeterminism, reproducibility constraints",
+      "short": "Reproducibility"
+    },
+    "sdpa": {
+      "title": "Scaled Dot-Product Attention in PyTorch",
+      "type": "Tutorial",
+      "url": "https://docs.pytorch.org/tutorials/intermediate/scaled_dot_product_attention_tutorial",
+      "note": "Reference implementation, masks, backend behavior",
+      "short": "SDPA tutorial"
+    },
+    "pttest": {
+      "title": "torch.testing.assert_close",
+      "type": "Docs",
+      "url": "https://docs.pytorch.org/docs/stable/testing.html",
+      "note": "Check tensor numerical correctness with tolerances",
+      "short": "Tensor assertions"
+    },
+    "transformerblocks": {
+      "title": "Transformer Building Blocks",
+      "type": "Tutorial",
+      "url": "https://docs.pytorch.org/tutorials/intermediate/transformer_building_blocks.html",
+      "note": "Modern building blocks and performance tradeoffs",
+      "short": "Transformer blocks"
+    },
+    "nanogpt": {
+      "title": "nanoGPT Reference Implementation",
+      "type": "Code",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "note": "Small decoder-only GPT implementation for comparison",
+      "short": "nanoGPT source"
+    },
+    "kv": {
+      "title": "Hugging Face KV Cache Guide",
+      "type": "Guide",
+      "url": "https://huggingface.co/docs/transformers/kv_cache",
+      "note": "How key-value caching affects generation",
+      "short": "KV cache guide"
+    },
+    "clangasan": {
+      "title": "Clang AddressSanitizer",
+      "type": "Docs",
+      "url": "https://clang.llvm.org/docs/AddressSanitizer.html",
+      "note": "Catching invalid memory use in C++",
+      "short": "AddressSanitizer"
+    },
+    "googlebench": {
+      "title": "Google Benchmark",
+      "type": "Code/Guide",
+      "url": "https://github.com/google/benchmark",
+      "note": "Build repeatable C++ microbenchmarks",
+      "short": "Google Benchmark"
+    },
+    "matmulopt": {
+      "title": "Algorithmica: Matrix Multiplication",
+      "type": "Guide",
+      "url": "https://en.algorithmica.org/hpc/algorithms/matmul/",
+      "note": "Loop order, blocking and CPU cache behavior",
+      "short": "Matrix multiplication"
+    },
+    "pybind": {
+      "title": "pybind11 Basics",
+      "type": "Guide",
+      "url": "https://pybind11.readthedocs.io/en/stable/basics.html",
+      "note": "Python bindings for C++ functions",
+      "short": "pybind11 basics"
+    },
+    "vllmprefix": {
+      "title": "vLLM Prefix Cache Design",
+      "type": "Docs",
+      "url": "https://docs.vllm.ai/en/latest/design/prefix_caching/",
+      "note": "Design of reusable KV cache blocks",
+      "short": "Prefix caching"
+    },
+    "cudasamples": {
+      "title": "NVIDIA CUDA Samples",
+      "type": "Code",
+      "url": "https://github.com/NVIDIA/cuda-samples",
+      "note": "Reference CUDA C++ kernels and sample code",
+      "short": "CUDA samples"
+    },
+    "cudabest": {
+      "title": "CUDA C++ Best Practices",
+      "type": "Docs",
+      "url": "https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/",
+      "note": "Memory coalescing, kernel efficiency, transfers",
+      "short": "CUDA best practices"
+    },
+    "ptbench": {
+      "title": "PyTorch Benchmark Recipe",
+      "type": "Tutorial",
+      "url": "https://docs.pytorch.org/tutorials/recipes/recipes/benchmark.html",
+      "note": "Timing PyTorch code reliably",
+      "short": "Benchmark recipe"
+    },
+    "hfassist": {
+      "title": "Hugging Face Assisted Decoding",
+      "type": "Guide",
+      "url": "https://huggingface.co/docs/transformers/assisted_decoding",
+      "note": "Reference speculative decoding APIs and assumptions",
+      "short": "Assisted decoding"
+    },
+    "matplotlib": {
+      "title": "Matplotlib Pyplot Tutorial",
+      "type": "Tutorial",
+      "url": "https://matplotlib.org/stable/tutorials/pyplot.html",
+      "note": "Plot measured results and compare baselines",
+      "short": "Plotting tutorial"
+    },
+    "pytest": {
+      "title": "pytest Getting Started",
+      "type": "Guide",
+      "url": "https://docs.pytest.org/en/stable/getting-started.html",
+      "note": "Automate and parameterize correctness tests",
+      "short": "pytest guide"
+    },
+    "checklist": {
+      "title": "NeurIPS Paper Checklist",
+      "type": "Guide",
+      "url": "https://neurips.cc/public/guides/PaperChecklist",
+      "note": "Reproducibility, claims, experiments and caveats",
+      "short": "Research checklist"
+    },
+    "githubreadme": {
+      "title": "GitHub: About READMEs",
+      "type": "Guide",
+      "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes",
+      "note": "Create a reproducible and useful project landing page",
+      "short": "README guide"
+    },
+    "githubactions": {
+      "title": "GitHub Actions: Python Workflow",
+      "type": "Tutorial",
+      "url": "https://docs.github.com/en/actions/how-tos/writing-workflows/building-and-testing/building-and-testing-python",
+      "note": "Run automated tests in CI",
+      "short": "Python CI"
+    },
+    "githubcontrib": {
+      "title": "GitHub: Contributing to Open Source",
+      "type": "Guide",
+      "url": "https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project",
+      "note": "Propose changes and contribute to existing repositories",
+      "short": "Contribution workflow"
+    },
+    "deepmindcareer": {
+      "title": "Google DeepMind Careers",
+      "type": "Career page",
+      "url": "https://deepmind.google/about/careers/",
+      "note": "Understand research-engineering role descriptions",
+      "short": "DeepMind roles"
+    },
+    "checkpoint": {
+      "title": "PyTorch: Saving and Loading Models",
+      "type": "Official tutorial",
+      "url": "https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html",
+      "note": "Save model and optimizer state; resume a training run.",
+      "short": "Checkpointing"
+    },
+    "vllmtuning": {
+      "title": "vLLM: Optimization and Tuning",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/configuration/optimization/",
+      "note": "Chunked prefill, token budgets and memory trade-offs; check your pinned release.",
+      "short": "Serving tuning"
+    },
+    "vllmbench": {
+      "title": "vLLM: Serving Benchmark CLI",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/cli/bench/serve/",
+      "note": "Request rates, workload inputs and serving latency measurements.",
+      "short": "Serving benchmarks"
+    },
+    "vllmmetrics": {
+      "title": "vLLM: Production Metrics",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/usage/metrics/",
+      "note": "Queueing, token latency and cache metrics; verify names in your release.",
+      "short": "Serving metrics"
+    },
+    "vllmgpu": {
+      "title": "vLLM: GPU Installation",
+      "type": "Official documentation",
+      "url": "https://docs.vllm.ai/en/latest/getting_started/installation/gpu/",
+      "note": "Check GPU, driver, PyTorch and runtime compatibility before committing to an experiment.",
+      "short": "GPU setup"
+    },
+    "sarathi": {
+      "title": "Sarathi-Serve: Taming Throughput-Latency Tradeoff",
+      "type": "Paper · OSDI 2024",
+      "url": "https://arxiv.org/abs/2403.02310",
+      "note": "Study chunked prefill and scheduling trade-offs; distinguish historical baselines from current vLLM.",
+      "short": "Sarathi-Serve paper"
+    },
+    "schedfollow": {
+      "title": "Optimal Scheduling Algorithms for LLM Inference: Theory and Practice",
+      "type": "Paper · 2025",
+      "url": "https://arxiv.org/abs/2508.01002",
+      "note": "A later scheduling study to include in the prior-work search; read assumptions before comparing claims.",
+      "short": "Scheduling follow-up"
+    },
+    "ddp": {
+      "title": "PyTorch: Getting Started with Distributed Data Parallel",
+      "type": "Official tutorial",
+      "url": "https://docs.pytorch.org/tutorials/intermediate/ddp_tutorial.html",
+      "note": "Conditional training-role branch: gradient synchronization, checkpointing and multi-process execution.",
+      "short": "Distributed training"
+    },
+    "anthropicjobs": {
+      "title": "Anthropic Careers: Engineering and Research Roles",
+      "type": "Career page",
+      "url": "https://www.anthropic.com/careers/jobs",
+      "note": "Compare live inference, research infrastructure and research engineering requirements.",
+      "short": "Anthropic roles"
+    },
+    "sakanajobs": {
+      "title": "Sakana AI Careers",
+      "type": "Career page",
+      "url": "https://sakana.ai/careers/",
+      "note": "Compare Tokyo-based research engineering and infrastructure roles.",
+      "short": "Sakana roles"
+    }
+  }
+}</script>
+<script>
+(()=>{
+'use strict';
+const {months,resources}=JSON.parse(document.getElementById('roadmap-data').textContent);
+const STORAGE_KEY='research-engineer-roadmap-v2';
+const LEGACY_KEY='research-engineer-roadmap-v1';
+let state={checks:{},notes:{}};
+try{let raw=localStorage.getItem(STORAGE_KEY);if(raw){let parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object'){state.checks=parsed.checks||{};state.notes=parsed.notes||{};}}}catch(e){document.getElementById('status').textContent='Local storage unavailable here. Use Export backup to preserve your progress.'}
+const total=months.reduce((a,m)=>a+m.weeks.reduce((x,w)=>x+w.tasks.length,0),0);
+const el=(tag,cls,text)=>{let n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
+const save=()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){status('Could not save locally; use Export backup.')}};
+const status=(str)=>{document.getElementById('status').textContent=str};
+const percent=(x,y)=>y?Math.round(100*x/y):0;
+const allTaskIds=m=>m.weeks.flatMap((w,wi)=>w.tasks.map((_,ti)=>m.id+'-w'+wi+'-t'+ti));
+function mkLink(id,short=false){const r=resources[id];const a=el('a',short?'ref-link':'resource');a.href=r.url;a.target='_blank';a.rel='noopener noreferrer';if(short){a.textContent=r.title}else{a.append(el('span','type',r.type),el('h4','',r.title),el('p','',r.note))};return a;}
+function build(){
+ const nav=document.getElementById('phaseNav');const home=document.getElementById('months');
+ months.forEach((m,mi)=>{
+  let n=el('button','phase-link');n.type='button';n.innerHTML='<span class="n">MONTH '+(mi+1)+'</span><span class="t"></span><span class="smalltrack"><span style="width:0%" id="navfill-'+m.id+'"></span></span>';n.querySelector('.t').textContent=m.name;n.addEventListener('click',()=>{document.getElementById(m.id).open=true;document.getElementById(m.id).scrollIntoView({behavior:'smooth',block:'start'})});nav.append(n);
+  let card=el('details','month');card.id=m.id;if(mi===0)card.open=true;
+  let head=el('summary','');let circ=el('span','phase-circle',String(mi+1));let body=el('div','phase-main');let line=el('div','monthline');let date=el('span','date-label',m.month+' · '+m.hours);let right=el('span','right');let count=el('span','count','0 / 8');count.id=m.id+'-count';let chev=el('span','chevron','⌄');right.append(count,chev);line.append(date,right);body.append(line,el('h3','',m.name),el('p','',m.theme));let track=el('div','smalltrack');let fill=el('span','');fill.id=m.id+'-fill';fill.style.width='0%';track.append(fill);body.append(track);head.append(circ,body);card.append(head);
+  let detail=el('div','monthbody');let call=el('div','callout');call.append(el('strong','','Milestone goal'),document.createTextNode(m.outcome));let tags=el('div','tag-row');m.tags.forEach(t=>tags.append(el('span','tag',t)));call.append(tags);detail.append(call);
+  let weeks=el('div','weeks');m.weeks.forEach((w,wi)=>{let wk=el('div','week');wk.append(el('h4','',w.title));w.tasks.forEach((t,ti)=>{let id=m.id+'-w'+wi+'-t'+ti;let item=el('div','task');let input=el('input');input.type='checkbox';input.id=id;input.dataset.task=id;input.checked=!!state.checks[id];input.addEventListener('change',()=>{state.checks[id]=input.checked;save();update()});let content=el('div','task-main');let label=el('label','task-text',t);label.htmlFor=id;content.append(label);let guides=el('div','task-links');guides.setAttribute('aria-label','Suggested reading for this task');(w.task_refs[ti]||[]).forEach(key=>{let r=resources[key];let link=el('a','task-ref',r.short||r.title);link.href=r.url;link.title=r.title+' · '+r.type;link.target='_blank';link.rel='noopener noreferrer';guides.append(link)});content.append(guides);item.append(input,content);wk.append(item)});weeks.append(wk)});detail.append(weeks);
+  let grid=el('div','details-grid');let gate=el('div','mini-panel');gate.append(el('h4','','Done when / exit criteria'));let ul=el('ul');m.gate.forEach(v=>ul.append(el('li','',v)));gate.append(ul);let caution=el('div','mini-panel');caution.append(el('h4','','Scope guardrail'),el('p','quiet',m.notnow));grid.append(gate,caution);detail.append(grid);
+  if(m.optional?.length){let extra=el('div','mini-panel');extra.style.marginTop='12px';extra.append(el('h4','','Optional / conditional · not counted in progress'));m.optional.forEach(o=>{extra.append(el('p','quiet',o.text));let links=el('div','links');o.refs.forEach(k=>links.append(mkLink(k,true)));extra.append(links)});detail.append(extra);}
+  let artifact=el('div','artifact');artifact.append(el('strong','','Concrete deliverable · '),document.createTextNode(m.artifact));detail.append(artifact);
+  let refs=el('div','resources-inline');refs.append(el('h4','','Reference materials'));let links=el('div','links');m.refs.forEach(id=>links.append(mkLink(id,true)));refs.append(links);detail.append(refs);
+  let noteLabel=el('label','notes-label quiet','Notes / experiments / blockers (saved locally)');noteLabel.htmlFor=m.id+'-notes';noteLabel.style.display='block';noteLabel.style.marginTop='16px';let textarea=el('textarea','notesbox');textarea.id=m.id+'-notes';textarea.placeholder='What did you learn? What failed? What is next?';textarea.value=state.notes[m.id]||'';textarea.addEventListener('input',()=>{state.notes[m.id]=textarea.value;save()});detail.append(noteLabel,textarea);card.append(detail);home.append(card);
+ });
+ let allRefs=document.getElementById('allReferences');Object.keys(resources).forEach(k=>allRefs.append(mkLink(k)));update();
+}
+function update(){let n=0;months.forEach(m=>{let ids=allTaskIds(m);let done=ids.filter(id=>!!state.checks[id]).length;n+=done;let p=percent(done,ids.length);document.getElementById(m.id+'-count').textContent=done+' / '+ids.length;document.getElementById(m.id+'-fill').style.width=p+'%';document.getElementById('navfill-'+m.id).style.width=p+'%'});let p=percent(n,total);document.getElementById('pct').textContent=p;document.getElementById('mobileProgress').textContent=p+'%';document.getElementById('fill').style.width=p+'%';document.getElementById('overallBar').setAttribute('aria-valuenow',p);document.getElementById('progressText').textContent=n+' of '+total+' tasks completed';let current=months.find(m=>allTaskIds(m).some(id=>!state.checks[id]));document.getElementById('focusText').textContent=current?('Focus: '+current.month+' · '+current.name):'All milestones complete — great work!';}
+document.getElementById('expandBtn').onclick=()=>document.querySelectorAll('details.month').forEach(x=>x.open=true);
+document.getElementById('collapseBtn').onclick=()=>document.querySelectorAll('details.month').forEach(x=>x.open=false);
+document.getElementById('printBtn').onclick=()=>window.print();
+document.getElementById('exportBtn').onclick=()=>{let backup={format:'research-engineer-roadmap',version:2,exportedAt:new Date().toISOString(),...state};let blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='research-engineer-progress.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Backup exported.')};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async(e)=>{let f=e.target.files[0];if(!f)return;try{let obj=JSON.parse(await f.text());if(obj.format!=='research-engineer-roadmap'||!obj.checks||typeof obj.checks!=='object')throw Error('Invalid backup format');if(obj.version!==2)throw Error('This backup belongs to the earlier roadmap. Keep it for reference; the revised tasks use a separate checklist.');state={checks:obj.checks||{},notes:obj.notes||{}};save();document.querySelectorAll('input[data-task]').forEach(c=>c.checked=!!state.checks[c.dataset.task]);months.forEach(m=>document.getElementById(m.id+'-notes').value=state.notes[m.id]||'');update();status('Backup restored successfully.')}catch(err){status('Could not import backup: '+err.message)}e.target.value=''};
+document.getElementById('resetBtn').onclick=()=>{if(confirm('Reset ALL 48 checkmarks and monthly notes? Export a backup first if you want to keep them.')){state={checks:{},notes:{}};save();document.querySelectorAll('input[data-task]').forEach(c=>c.checked=false);document.querySelectorAll('textarea.notesbox').forEach(t=>t.value='');update();status('Progress reset.')}};
+let expanded=[];window.addEventListener('beforeprint',()=>{expanded=Array.from(document.querySelectorAll('details.month')).filter(x=>x.open).map(x=>x.id);document.querySelectorAll('details.month').forEach(x=>x.open=true)});window.addEventListener('afterprint',()=>document.querySelectorAll('details.month').forEach(x=>x.open=expanded.includes(x.id)));
+build();
+try{const legacy=localStorage.getItem(LEGACY_KEY);if(legacy){let button=el('button','btn','Export earlier progress');button.type='button';button.onclick=()=>{try{const old=JSON.parse(legacy);const blob=new Blob([JSON.stringify({...old,format:'research-engineer-roadmap',version:1,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=el('a');a.href=url;a.download='research-engineer-progress-v1.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);status('Earlier progress exported; the revised checklist is unchanged.')}catch(e){status('Could not export earlier progress: '+e.message)}};document.getElementById('importBtn').parentElement.append(button)}}catch(e){}
+})();
+</script>
+</body></html>
